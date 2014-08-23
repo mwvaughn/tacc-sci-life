@@ -5,7 +5,7 @@ Release:    2
 License:    GPL
 Vendor:     DFCI
 Group: Applications/Life Sciences
-Source:     macs2-%{version}.zip
+Source:     https://github.com/taoliu/MACS/archive/MACS-2.0.10_6_6_2012.tar.gz
 Packager:   TACC - wonaya@tacc.utexas.edu
 BuildRoot:  /var/tmp/%{name}-%{version}-buildroot
 
@@ -35,7 +35,7 @@ MACS2 empirically models the length of the sequenced ChIP fragments and uses it 
 rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 ## SETUP
-%setup -n MACS-master
+%setup -n MACS-2.0.10_6_6_2012
 %build
 %install
 %include ../system-load.inc
@@ -45,10 +45,13 @@ module purge
 module load TACC
 module swap intel gcc
 module load python
-python setup.py install --prefix=$PWD
+
+# python setup.py install --prefix=$PWD
+python setup_w_cython.py install --prefix=$PWD
+
 module unload python
 
-cp -r bin/* lib MACS2  README.rst $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp -r bin/* lib MACS2  README* $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}

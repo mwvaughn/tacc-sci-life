@@ -1,0 +1,191 @@
+#!/usr/bin/lua
+-- -*- lua -*-
+local LuaCommandName = arg[0]
+local i,j = LuaCommandName:find(".*/")
+local LuaCommandName_dir = "./"
+if (i) then
+   LuaCommandName_dir = LuaCommandName:sub(1,j)
+end
+package.path = LuaCommandName_dir .. "?.lua;"      ..
+               LuaCommandName_dir .. "?/init.lua;" ..
+               package.path
+
+require("strict")
+require("capture")
+require("string_split")
+require("string_trim")
+
+local Dbg       = require("Dbg")
+local Optiks    = require("Optiks")
+local concatTbl = table.concat
+local master    = {}
+
+function masterTbl()
+   return master
+end
+
+
+function parse(fn, cmplrStr, mpiStr)
+   local masterTbl = masterTbl()
+   local t = {
+      name    = "unknown",
+      version = "unknown",
+      release = "unknown",
+      files   = "unknown",
+   }
+
+
+   local a = {
+      {pat="^[Nn]ame:",    n="name"},
+      {pat="^[Vv]ersion:", n="version"},
+      {pat="^[Rr]elease:", n="release"},
+      {pat="^%%files",     n="files"},
+   }
+
+   
+   local f     = assert(io.open(fn))
+   local whole = f:read("*all")
+   f:close()
+
+   for l in whole:split("\n") do
+      local idx = nil
+      for i = 1,#a do
+         local pat=a[i].pat
+         local i, j = l:find(pat)
+         if (i) then
+            local n = a[i].n
+            t[n] = l:sub(j+1,-1):trim()
+            idx  = i
+         end
+      end
+      if ( idx ) then
+         table.remove(a,idx)
+      end
+   end
+   
+   local files = t.files
+   local aa    = {}
+   aa[#aa+1] = t.name
+   if (files:find("%%{comp_fam_ver}")) then
+      aa[#aa+1] = cmplrStr
+   end
+
+   if (files:find("%%{mpi_fam_ver}")) then
+      aa[#aa+1] = mpiStr
+   end
+
+   aa[#aa+1] = t.version
+   aa[#aa+1] = t.release
+
+   return concatTbl(aa,"-")
+end
+
+
+function check(s)
+
+   local a = {}
+   a[#a + 1] = "rpm -qa | grep "
+   a[#a + 1] = s
+   a[#a + 1] = "\n"
+   local cmd = concatTbl(a,"")
+   local ss = capture(cmd)
+   if (ss ~= "") then
+      print ("rebuilding an already installed rpm: ", s)
+      return false
+   end
+   return true
+end
+
+
+function main()
+
+   options()
+   local masterTbl = masterTbl()
+   local fn        = masterTbl.pargs[1]
+   
+   local cmplrStr, mpiStr = captureStrings()
+
+   local s = parse(fn, cmplrStr, mpiStr )
+   print (s)
+
+   if (not check(s)) then
+      os.exit(1)
+   end
+
+end
+
+function options()
+   local masterTbl     = masterTbl()
+   local usage         = "Usage: parseSpec -c cmplr_string -m mpi_string"
+   local cmdlineParser = Optiks:new{usage=usage, version="1.0"}
+
+   cmdlineParser:add_option{ 
+      name   = {'-c'},
+      dest   = 'compiler',
+      action = 'store_true',
+      default = "false",
+   }
+
+   cmdlineParser:add_option{ 
+      name   = {'-m'},
+      dest   = 'mpi',
+      action = 'store_true',
+      default = "false",
+   }
+
+   cmdlineParser:add_option{ 
+      name   = {'-d',"--define"},
+      dest   = 'define',
+      action = 'append',
+      default = {},
+   }
+
+   local optionTbl, pargs = cmdlineParser:parse(arg)
+
+   for v in pairs(optionTbl) do
+      masterTbl[v] = optionTbl[v]
+   end
+   masterTbl.pargs = pargs
+
+end
+
+function captureStrings()
+   local masterTbl = masterTbl()
+   local cmplrStr  = "unknown"
+   local mpiStr    = "unknown"
+   local specStub  = "unknown"
+
+   if ( not masterTbl.compiler and not masterTbl.mpi) then
+      return cmplrStr, mpiStr
+   end
+   if (masterTbl.compiler and masterTbl.mpi) then
+      specStub  = "/opt/apps/tacc_build_rpm/0.9.5/lib/dummy_cmplr_mpi.spec"
+   elseif (masterTbl.compiler) then
+      specStub  = "/opt/apps/tacc_build_rpm/0.9.5/lib/dummy_cmplr.spec"
+   end
+
+   local a = {}
+   a[#a+1] = "rpmbuild -bp"
+   for i = 1, #masterTbl.define do
+      a[#a+1] = "--define"
+      a[#a+1] = "'"..masterTbl.define[i].."'"
+   end
+   a[#a+1] = specStub
+   a[#a+1] = "2> /dev/null"
+
+   local whole = capture(concatTbl(a," "))
+   for line in whole:split("\n") do
+      local i,j = line:find("^%%{comp_fam_ver}:")
+      if (i) then
+         cmplrStr = line:sub(j+1):trim()
+      end
+      local i,j = line:find("^%%{mpi_fam_ver}:")
+      if (i) then
+         mpiStr = line:sub(j+1):trim()
+      end
+   end
+
+   return cmplrStr, mpiStr
+end
+
+main()
