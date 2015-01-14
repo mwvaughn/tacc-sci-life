@@ -5,7 +5,7 @@
 #-------------------------------------------------------------------
 
 Buildroot: /var/tmp/%{name}-%{version}-buildroot
-%define _topdir %(echo ${PWD%SPECS*})
+%define _topdir %(echo ${PWD%SPECS*})/%{PLATFORM}
 %define APPS    /opt/apps
 %define MODULES  modulefiles
 %define SPEC_DIR %{_topdir}/SPECS
