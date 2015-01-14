@@ -25,7 +25,7 @@ The GATK is a structured software library that makes writing efficient analysis 
 rm   -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-%setup -n GenomeAnalysisTK-3.2-2
+%setup -c
 
 %build
 
