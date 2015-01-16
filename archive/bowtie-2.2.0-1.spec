@@ -1,12 +1,12 @@
 # $Id$
 
 Name: bowtie
-Version: 2.2.4
+Version: 2.2.0
 Release: 1
 License: GPL
 Group: Applications/Life Sciences
-Source:  http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.4/bowtie2-2.2.4-source.zip
-Packager: TACC - jfonner@tacc.utexas.edu
+Source:  bowtie2-2.2.0-source.zip
+Packager: TACC - jcarson@tacc.utexas.edu
 Summary: Memory-efficient short read (NGS) aligner
 
 # Based off of John Fonner's spec file bowtie-2.1.0-2
@@ -16,18 +16,22 @@ Summary: Memory-efficient short read (NGS) aligner
 # BASIC DEFINITIONS
 #------------------------------------------------
 # This will define the correct _topdir and turn of building a debug package
-%include ./include/system-defines.inc
-%include ./include/%{PLATFORM}/rpm-dir.inc
+%define debug_package %{nil}
+%include ../rpm-dir.inc
+%include ../system-defines.inc
+
 # Compiler Family Definitions
 # %include compiler-defines.inc
 # MPI Family Definitions
 # %include mpi-defines.inc
 # Other defs
 
+%define APPS    /opt/apps
+%define MODULES modulefiles
 %define INSTALL_DIR %{APPS}/%{name}/%{version}
 %define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}BOWTIE
-%define PNAME       bowtie
+%define MODULE_VAR TACC_BOWTIE
+%define PNAME bowtie
 
 #------------------------------------------------
 # PACKAGE DESCRIPTION
@@ -59,31 +63,31 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ##
 %install
 
-# Start with a clean environment
-%include ./include/%{PLATFORM}/system-load.inc
+%include ../system-load.inc
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
+# Start with a clean environment
+if [ -f "$BASH_ENV" ]; then
+   . $BASH_ENV
+   export MODULEPATH=/opt/apps/xsede/modulefiles:/opt/apps/modulefiles:/opt/modulefiles
+fi
 
-## INSTALLSTART
 module purge
 module load TACC
 module swap $TACC_FAMILY_COMPILER gcc
 
 # Since LDFLAGS is not used in compilation, we hijack EXTRA_FLAGS to carry the rpath payload
 make EXTRA_FLAGS="-Wl,-rpath,$GCC_LIB"
-## INSTALLEND
 
-cp -R ./bowtie2* ./doc ./scripts $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp -R ./* $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 # ADD ALL MODULE STUFF HERE
 rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-
-## Module Decorator
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-The %{PNAME} module file defines the following environment variables:
+The %{name} module file defines the following environment variables:
 %{MODULE_VAR}_DIR and %{MODULE_VAR}_SCRIPTS for the location of the %{name}
 distribution. Documentation can be found online at http://bowtie-bio.sourceforge.net/bowtie2/
 
@@ -110,7 +114,6 @@ prereq("perl")
 
 
 EOF
-## End Docorator
 
 #--------------
 #  Version file.

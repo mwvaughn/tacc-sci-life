@@ -1,39 +1,43 @@
 # $Id$
 
-Name: bowtie
-Version: 2.2.4
-Release: 1
+Name: muscle
+Version: 3.8.31
+Release: 2
 License: GPL
 Group: Applications/Life Sciences
-Source:  http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.4/bowtie2-2.2.4-source.zip
-Packager: TACC - jfonner@tacc.utexas.edu
+Source:  muscle3.8.31_src.tar.gz
+Packager: TACC - jcarson@tacc.utexas.edu
 Summary: Memory-efficient short read (NGS) aligner
 
-# Based off of John Fonner's spec file bowtie-2.1.0-2
-# http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.0/
+# http://www.drive5.com/muscle/downloads.htm
 
 #------------------------------------------------
 # BASIC DEFINITIONS
 #------------------------------------------------
 # This will define the correct _topdir and turn of building a debug package
-%include ./include/system-defines.inc
-%include ./include/%{PLATFORM}/rpm-dir.inc
+%define debug_package %{nil}
+%include ../rpm-dir.inc
+#%include ../system-defines.inc
+#%include ../system-load.inc
+
 # Compiler Family Definitions
 # %include compiler-defines.inc
 # MPI Family Definitions
 # %include mpi-defines.inc
 # Other defs
 
+%define APPS    /opt/apps
+%define MODULES modulefiles
 %define INSTALL_DIR %{APPS}/%{name}/%{version}
 %define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}BOWTIE
-%define PNAME       bowtie
+%define MODULE_VAR TACC_MUSCLE
+%define PNAME muscle
 
 #------------------------------------------------
 # PACKAGE DESCRIPTION
 #------------------------------------------------
 %description
-Bowtie 2 is an ultrafast and memory-efficient tool for aligning sequencing reads to long reference sequences. It is particularly good at aligning reads of about 50 up to 100s or 1,000s of characters, and particularly good at aligning to relatively long (e.g. mammalian) genomes. Bowtie 2 indexes the genome with an FM Index to keep its memory footprint small: for the human genome, its memory footprint is typically around 3.2 GB. Bowtie 2 supports gapped, local, and paired-end alignment modes.
+MUSCLE is one of the best-performing multiple alignment programs according to published benchmark tests, with accuracy and speed that are consistently better than CLUSTALW. MUSCLE can align hundreds of sequences in seconds. Most users learn everything they need to know about MUSCLE in a few minutes—only a handful of command-line options are needed to perform common alignment tasks.
 
 ##
 ## PREP
@@ -46,7 +50,7 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ## SETUP
 ##
 
-%setup -n %{PNAME}2-%{version}
+%setup -n %{PNAME}%{version}/src
 
 ##
 ## BUILD
@@ -59,58 +63,44 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ##
 %install
 
-# Start with a clean environment
-%include ./include/%{PLATFORM}/system-load.inc
+%include ../system-load.inc
+
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-
-## INSTALLSTART
 module purge
 module load TACC
-module swap $TACC_FAMILY_COMPILER gcc
+module swap intel gcc
 
-# Since LDFLAGS is not used in compilation, we hijack EXTRA_FLAGS to carry the rpath payload
-make EXTRA_FLAGS="-Wl,-rpath,$GCC_LIB"
-## INSTALLEND
-
-cp -R ./bowtie2* ./doc ./scripts $RPM_BUILD_ROOT/%{INSTALL_DIR}
+sed -i s/-static// ./mk
+make ENV_LINK_OPTS="-Wl,-rpath=$GCC_LIB"
+cp -r ./* $RPM_BUILD_ROOT%{INSTALL_DIR} 
 
 # ADD ALL MODULE STUFF HERE
 rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-
-## Module Decorator
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-The %{PNAME} module file defines the following environment variables:
+The %{name} module file defines the following environment variables:
 %{MODULE_VAR}_DIR and %{MODULE_VAR}_SCRIPTS for the location of the %{name}
-distribution. Documentation can be found online at http://bowtie-bio.sourceforge.net/bowtie2/
-
-NOTE: Bowtie2 indexes are not backwards compatible with Bowtie1 indexes. 
-
-This module provides the bowtie2, bowtie2-align, bowtie2-build, and bowtie2-inspect binaries + scripts
+distribution. Documentation can be found online at http://www.drive5.com/muscle/
 
 Version %{version}
 
 ]])
 
-whatis("Name: Bowtie")
+whatis("Name: MUSCLE")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
 whatis("Keywords: Biology, Genomics, Alignment, Sequencing")
-whatis("URL: http://bowtie-bio.sourceforge.net/bowtie2/")
-whatis("Description: Ultrafast, memory-efficient short read aligner")
+whatis("URL: http://www.drive5.com/muscle/")
+whatis("Description: Popular multiple alignment software")
 
 setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
 setenv("%{MODULE_VAR}_SCRIPTS","%{INSTALL_DIR}/scripts")
 prepend_path("PATH"       ,"%{INSTALL_DIR}")
 
-prereq("perl")
-
-
 EOF
-## End Docorator
 
 #--------------
 #  Version file.

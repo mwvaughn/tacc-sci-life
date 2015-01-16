@@ -1,23 +1,24 @@
 # $Id$
 
-Name: bowtie
-Version: 2.2.4
+Name: cd-hit
+Version: 4.6.1
 Release: 1
 License: GPL
 Group: Applications/Life Sciences
-Source:  http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.4/bowtie2-2.2.4-source.zip
-Packager: TACC - jfonner@tacc.utexas.edu
-Summary: Memory-efficient short read (NGS) aligner
+Source:  https://cdhit.googlecode.com/files/cd-hit-v4.6.1-2012-08-27.tgz
+Packager: TACC - jcarson@tacc.utexas.edu
+Summary: Clustering DNA/protein sequence database at high identity with tolerance. 
 
-# Based off of John Fonner's spec file bowtie-2.1.0-2
-# http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.0/
+# Original sources was named cd-hit-v4.6.1-2012-08-27.tgz
+# Updated Makefile to support DESTDIR.  Re-tarred source.
 
 #------------------------------------------------
 # BASIC DEFINITIONS
 #------------------------------------------------
 # This will define the correct _topdir and turn of building a debug package
-%include ./include/system-defines.inc
-%include ./include/%{PLATFORM}/rpm-dir.inc
+%include ../system-defines.inc
+%include rpm-dir.inc
+
 # Compiler Family Definitions
 # %include compiler-defines.inc
 # MPI Family Definitions
@@ -26,14 +27,14 @@ Summary: Memory-efficient short read (NGS) aligner
 
 %define INSTALL_DIR %{APPS}/%{name}/%{version}
 %define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}BOWTIE
-%define PNAME       bowtie
+%define MODULE_VAR TACC_CDHIT
+%define PNAME cd-hit
 
 #------------------------------------------------
 # PACKAGE DESCRIPTION
 #------------------------------------------------
 %description
-Bowtie 2 is an ultrafast and memory-efficient tool for aligning sequencing reads to long reference sequences. It is particularly good at aligning reads of about 50 up to 100s or 1,000s of characters, and particularly good at aligning to relatively long (e.g. mammalian) genomes. Bowtie 2 indexes the genome with an FM Index to keep its memory footprint small: for the human genome, its memory footprint is typically around 3.2 GB. Bowtie 2 supports gapped, local, and paired-end alignment modes.
+CD-HIT is a program for clustering DNA/protein sequence database at high identity with tolerance.
 
 ##
 ## PREP
@@ -46,7 +47,7 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ## SETUP
 ##
 
-%setup -n %{PNAME}2-%{version}
+%setup -n %{PNAME}-v%{version}-2012-08-27
 
 ##
 ## BUILD
@@ -59,58 +60,43 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ##
 %install
 
-# Start with a clean environment
-%include ./include/%{PLATFORM}/system-load.inc
+%include ../system-load.inc
+
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-
-## INSTALLSTART
 module purge
 module load TACC
-module swap $TACC_FAMILY_COMPILER gcc
 
-# Since LDFLAGS is not used in compilation, we hijack EXTRA_FLAGS to carry the rpath payload
-make EXTRA_FLAGS="-Wl,-rpath,$GCC_LIB"
-## INSTALLEND
-
-cp -R ./bowtie2* ./doc ./scripts $RPM_BUILD_ROOT/%{INSTALL_DIR}
+make PREFIX=$RPM_BUILD_ROOT/%{INSTALL_DIR} openmp=yes 
+make PREFIX=$RPM_BUILD_ROOT/%{INSTALL_DIR} install
+make clean
 
 # ADD ALL MODULE STUFF HERE
 rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-
-## Module Decorator
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
 The %{PNAME} module file defines the following environment variables:
-%{MODULE_VAR}_DIR and %{MODULE_VAR}_SCRIPTS for the location of the %{name}
-distribution. Documentation can be found online at http://bowtie-bio.sourceforge.net/bowtie2/
-
-NOTE: Bowtie2 indexes are not backwards compatible with Bowtie1 indexes. 
-
-This module provides the bowtie2, bowtie2-align, bowtie2-build, and bowtie2-inspect binaries + scripts
+%{MODULE_VAR}_DIR and %{MODULE_VAR}_SCRIPTS for the location of the %{PNAME}
+distribution. Documentation can be found online at http://weizhong-lab.ucsd.edu/cd-hit/ref.php
 
 Version %{version}
 
 ]])
 
-whatis("Name: Bowtie")
+whatis("Name: CD-HIT")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
-whatis("Keywords: Biology, Genomics, Alignment, Sequencing")
-whatis("URL: http://bowtie-bio.sourceforge.net/bowtie2/")
-whatis("Description: Ultrafast, memory-efficient short read aligner")
+whatis("Keywords: Biology, Genomics, Proteomics, Clustering")
+whatis("URL: https://code.google.com/p/cdhit/")
+whatis("Description: Clustering DNA/protein sequence database at high identity with tolerance.")
 
 setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
 setenv("%{MODULE_VAR}_SCRIPTS","%{INSTALL_DIR}/scripts")
 prepend_path("PATH"       ,"%{INSTALL_DIR}")
 
-prereq("perl")
-
-
 EOF
-## End Docorator
 
 #--------------
 #  Version file.
