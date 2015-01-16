@@ -1,5 +1,0 @@
-tkmedit started: Thu Sep 19 13:18:51 2013
-
-	/opt/apps/freesurfer/5.3.0/tktools/tkmedit.bin bert orig.mgz 
-
-$Id: tkmedit.c,v 1.343 2011/03/01 01:41:22 nicks Exp $ $Name: stable5 $
