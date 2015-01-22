@@ -1,5 +1,3 @@
-# $Id$
-
 Name:       bwa
 Summary:    Burrows-Wheeler Alignment Tool
 Version:    0.7.12
@@ -10,76 +8,68 @@ Group: Applications/Life Sciences
 Source:     http://sourceforge.net/projects/bio-bwa/files/bwa-0.7.12.tar.bz2
 Packager:   TACC - vaughn@tacc.utexas.edu
 
-# Based off of John Fonner's spec file bowtie-2.1.0-2
-# http://sourceforge.net/projects/bio-bwa
+#------------------------------------------------
+# INITIAL DEFINITIONS
+#------------------------------------------------
 
-#------------------------------------------------
-# BASIC DEFINITIONS
-#------------------------------------------------
-# This will define the correct _topdir and turn off building a debug package
+## System Definitions
 %include ./include/system-defines.inc
 %include ./include/%{PLATFORM}/rpm-dir.inc
-# Compiler Family Definitions
-# %include compiler-defines.inc
-# MPI Family Definitions
-# %include mpi-defines.inc
-# Other defs
+## Compiler Family Definitions
+# %include ./include/%{PLATFORM}/compiler-defines.inc
+## MPI Family Definitions
+# %include ./include/%{PLATFORM}/mpi-defines.inc## Compiler Family Definitions
 
 %define INSTALL_DIR %{APPS}/%{name}/%{version}
 %define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
 %define MODULE_VAR  %{MODULE_VAR_PREFIX}BWA
 %define PNAME       bwa
 
-#------------------------------------------------
-# PACKAGE DESCRIPTION
-#------------------------------------------------
+## PACKAGE DESCRIPTION
 %description
 BWA is a software package for mapping low-divergent sequences against a large reference genome, such as the human genome. It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM. The first algorithm is designed for Illumina sequence reads up to 100bp, while the rest two for longer sequences ranged from 70bp to 1Mbp. BWA-MEM and BWA-SW share similar features such as long-read support and split alignment, but BWA-MEM, which is the latest, is generally recommended for high-quality queries as it is faster and more accurate. BWA-MEM also has better performance than BWA-backtrack for 70-100bp Illumina reads.
 
-##
 ## PREP
-##
 # Use -n <name> if source file different from <name>-<version>.tar.gz
 %prep
 rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-##
 ## SETUP
-##
-
 %setup -n %{PNAME}-%{version}
 
-##
 ## BUILD
-##
-
 %build
 
-##
-## INSTALL
-##
+#------------------------------------------------
+# INSTALL
+#------------------------------------------------
 %install
 
 # Start with a clean environment
 %include ./include/%{PLATFORM}/system-load.inc
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-## INSTALLSTART
+#------------------------------------------------
+## Install Steps Start 
 module purge
 module load TACC
 module swap $TACC_FAMILY_COMPILER gcc
 
-# Since LDFLAGS is not used in compilation, we hijack EXTRA_FLAGS to carry the rpath payload
-make EXTRA_FLAGS="-Wl,-rpath,$GCC_LIB"
+make
 
-## INSTALLEND
+## Install Steps End
+#------------------------------------------------
 
 cp ./bwa *.pl $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-# ADD ALL MODULE STUFF HERE
+#------------------------------------------------
+# MODULEFILE CREATION
+#------------------------------------------------
 rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
+#------------------------------------------------
+## Modulefile Start
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
@@ -100,12 +90,15 @@ setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
 prepend_path("PATH"       ,"%{INSTALL_DIR}")
 
 EOF
-## End Decorator
+## Modulefile End
+#------------------------------------------------
 
-#--------------
-#  Version file.
-#--------------
+## Lua syntax check
+if [ -f $SPECS_DIR/checkModuleSyntax ]; then
+    $SPECS_DIR/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+fi
 
+## VERSION FILE
 cat > $RPM_BUILD_ROOT%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -126,9 +119,7 @@ EOF
 %{INSTALL_DIR}
 %{MODULE_DIR}
 
-#------------------------------------------------
-# CLEAN UP SECTION
-#------------------------------------------------
+## CLEAN UP
 %post
 %clean
 # Make sure we are not within one of the directories we try to delete

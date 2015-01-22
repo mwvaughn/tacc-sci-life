@@ -1,5 +1,3 @@
-# $Id$
-
 Name: bowtie
 Version: 2.2.4
 Release: 1
@@ -9,54 +7,41 @@ Source:  http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.4/bowti
 Packager: TACC - jfonner@tacc.utexas.edu
 Summary: Memory-efficient short read (NGS) aligner
 
-# Based off of John Fonner's spec file bowtie-2.1.0-2
-# http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.0/
+#------------------------------------------------
+# INITIAL DEFINITIONS
+#------------------------------------------------
 
-#------------------------------------------------
-# BASIC DEFINITIONS
-#------------------------------------------------
-# This will define the correct _topdir and turn of building a debug package
+## System Definitions
 %include ./include/system-defines.inc
 %include ./include/%{PLATFORM}/rpm-dir.inc
-# Compiler Family Definitions
-# %include compiler-defines.inc
-# MPI Family Definitions
-# %include mpi-defines.inc
-# Other defs
+## Compiler Family Definitions
+# %include ./include/%{PLATFORM}/compiler-defines.inc
+## MPI Family Definitions
+# %include ./include/%{PLATFORM}/mpi-defines.inc
 
 %define INSTALL_DIR %{APPS}/%{name}/%{version}
 %define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
 %define MODULE_VAR  %{MODULE_VAR_PREFIX}BOWTIE
 %define PNAME       bowtie
 
-#------------------------------------------------
-# PACKAGE DESCRIPTION
-#------------------------------------------------
+## PACKAGE DESCRIPTION
 %description
 Bowtie 2 is an ultrafast and memory-efficient tool for aligning sequencing reads to long reference sequences. It is particularly good at aligning reads of about 50 up to 100s or 1,000s of characters, and particularly good at aligning to relatively long (e.g. mammalian) genomes. Bowtie 2 indexes the genome with an FM Index to keep its memory footprint small: for the human genome, its memory footprint is typically around 3.2 GB. Bowtie 2 supports gapped, local, and paired-end alignment modes.
 
-##
 ## PREP
-##
 # Use -n <name> if source file different from <name>-<version>.tar.gz
 %prep
 rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-##
 ## SETUP
-##
-
 %setup -n %{PNAME}2-%{version}
 
-##
 ## BUILD
-##
-
 %build
 
-##
-## INSTALL
-##
+#------------------------------------------------
+# INSTALL
+#------------------------------------------------
 %install
 
 # Start with a clean environment
@@ -64,22 +49,27 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 
-## INSTALLSTART
+#------------------------------------------------
+## Install Steps Start
 module purge
 module load TACC
 module swap $TACC_FAMILY_COMPILER gcc
 
 # Since LDFLAGS is not used in compilation, we hijack EXTRA_FLAGS to carry the rpath payload
 make EXTRA_FLAGS="-Wl,-rpath,$GCC_LIB"
-## INSTALLEND
+## Install Steps End
+#------------------------------------------------
 
 cp -R ./bowtie2* ./doc ./scripts $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-# ADD ALL MODULE STUFF HERE
+#------------------------------------------------
+# MODULEFILE CREATION
+#------------------------------------------------
 rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
-## Module Decorator
+#------------------------------------------------
+## Modulefile Start
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
@@ -108,14 +98,16 @@ prepend_path("PATH"       ,"%{INSTALL_DIR}")
 
 prereq("perl")
 
-
 EOF
-## End Docorator
+## Modulefile End
+#------------------------------------------------
 
-#--------------
-#  Version file.
-#--------------
+## Lua syntax check
+if [ -f $SPECS_DIR/checkModuleSyntax ]; then
+    $SPECS_DIR/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+fi
 
+##  VERSION FILE
 cat > $RPM_BUILD_ROOT%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -124,8 +116,6 @@ cat > $RPM_BUILD_ROOT%{MODULE_DIR}/.version.%{version} << 'EOF'
 
 set     ModulesVersion      "%{version}"
 EOF
-
-
 
 #------------------------------------------------
 # FILES SECTION
@@ -138,9 +128,7 @@ EOF
 %{INSTALL_DIR}
 %{MODULE_DIR}
 
-#------------------------------------------------
-# CLEAN UP SECTION
-#------------------------------------------------
+## CLEAN UP
 %post
 %clean
 # Make sure we are not within one of the directories we try to delete
