@@ -55,7 +55,7 @@ module purge
 module load TACC
 module swap $TACC_FAMILY_COMPILER gcc
 
-# Since LDFLAGS is not used in compilation, we hijack EXTRA_FLAGS to carry the rpath payload
+# Since LDFLAGS is not used in bowtie's compilation, we hijack EXTRA_FLAGS to carry the rpath payload
 make EXTRA_FLAGS="-Wl,-rpath,$GCC_LIB"
 ## Install Steps End
 #------------------------------------------------
