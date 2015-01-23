@@ -94,8 +94,8 @@ EOF
 #------------------------------------------------
 
 ## Lua syntax check
-if [ -f $SPECS_DIR/checkModuleSyntax ]; then
-    $SPECS_DIR/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+if [ -f $SPEC_DIR/checkModuleSyntax ]; then
+    $SPEC_DIR/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
 fi
 
 ## VERSION FILE
