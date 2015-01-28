@@ -6,6 +6,7 @@ Group: Applications/Life Sciences
 Source:  http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.4/bowtie2-2.2.4-source.zip
 Packager: TACC - jfonner@tacc.utexas.edu
 Summary: Memory-efficient short read (NGS) aligner
+Prefix: /opt/apps
 
 #------------------------------------------------
 # INITIAL DEFINITIONS
