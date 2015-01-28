@@ -17,7 +17,8 @@ Packager:   TACC - vaughn@tacc.utexas.edu
 ## Compiler Family Definitions
 # %include ./include/%{PLATFORM}/compiler-defines.inc
 ## MPI Family Definitions
-# %include ./include/%{PLATFORM}/mpi-defines.inc## Compiler Family Definitions
+# %include ./include/%{PLATFORM}/mpi-defines.inc
+## Compiler Family Definitions
 
 %define INSTALL_DIR %{APPS}/%{name}/%{version}
 %define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
@@ -49,7 +50,7 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
-## Install Steps Start 
+## Install Steps Start
 module purge
 module load TACC
 module swap $TACC_FAMILY_COMPILER gcc
