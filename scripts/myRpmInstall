@@ -1,0 +1,40 @@
+#!/bin/bash
+
+usage="Usage: myRpmInstall <prefix> <file.rpm>"
+
+if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    echo $usage
+    exit 0
+fi
+
+if [ $# -lt 2 ]; then
+    echo "Error: Less than two command line arguments."
+    echo $usage
+    exit 1
+fi
+
+prefix=$1
+if [ ! -d $prefix ]; then
+    echo "Error: The path $prefix was not found.  It should be an existing directory"
+    echo $usage
+    exit 2
+fi
+
+rpmFile=$2
+if [ ! -f $specFile ]; then
+    echo "Error: could not find the RPM file $rpmFile.  If it is in a directory, give a path to the file."
+    echo $usage
+fi
+
+# OK, let's give it a try
+echo "Installing RPM"
+rpm --dbpath $prefix --prefix $prefix -Uvh --force --nodeps $rpmFile
+
+echo "Editing modulefile paths"
+#figure out where the modulefile is
+modulefile=$(rpm -qlp bowtie-2.2.4-1.x86_64. | grep modulefiles | grep lua$)
+modulefile=$prefix${moduleFile##/opt/apps} #TODO use the path to figure out the old prefix instead of hardcoding /opt/apps
+
+#now edit it
+escapedPrefix=$(echo $prefix | sed -e 's/\//\\\//g')
+sed -i -e "s/\/opt\/apps/$escapedPrefix/g" $modulefile
