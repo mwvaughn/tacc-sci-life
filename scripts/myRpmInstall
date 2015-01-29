@@ -32,9 +32,25 @@ rpm --dbpath $prefix --prefix $prefix -Uvh --force --nodeps $rpmFile
 
 echo "Editing modulefile paths"
 #figure out where the modulefile is
-modulefile=$(rpm -qlp bowtie-2.2.4-1.x86_64. | grep modulefiles | grep lua$)
-modulefile=$prefix${moduleFile##/opt/apps} #TODO use the path to figure out the old prefix instead of hardcoding /opt/apps
+modulefile=$(rpm -qlp $rpmFile | grep modulefiles | grep lua$)
+#TODO use the path to figure out the old prefix instead of hardcoding /opt/apps
+modulefile=${prefix}${modulefile##/opt/apps} 
 
+if [ ! -f $modulefile ]; then
+    echo "The paths in the modulefile for this RPM should be updated."
+    echo "It could not be done automatically."
+    exit 3
+fi
+
+echo "Updating paths in the modulefile $modulefile"
 #now edit it
 escapedPrefix=$(echo $prefix | sed -e 's/\//\\\//g')
 sed -i -e "s/\/opt\/apps/$escapedPrefix/g" $modulefile
+
+echo "Checking the \$MODULEPATH variable."
+if (( $(echo $MODULEPATH | grep -c "${modulefile%/*/*}") )); then
+    echo "Everything looks good.  Try loading the module"
+else
+    echo "looks like the \$MODULEPATH environment variable needs updating."
+    echo "Check the README.md file if you aren't sure how to do that."
+fi
