@@ -6,7 +6,10 @@
 # if you don't have a SPECS directory, this won't work
 
 Buildroot: %(echo ${PWD%SPECS*})/tmp/%{name}-%{version}-buildroot
-%define _topdir %(echo ${PWD%SPECS*})
+%define _topdir %(echo ${PWD%SPECS*})/%{PLATFORM}
+%define APPS    /opt/apps
+%define MODULES  modulefiles
+%define SPEC_DIR %{_topdir}/SPECS
 
 %define defined()      %{expand:%%{?%{1}:1}%%{!?%{1}:0}}
 %define undefined()    %{expand:%%{?%{1}:0}%%{!?%{1}:1}}
