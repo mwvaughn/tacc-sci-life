@@ -7,6 +7,7 @@ Vendor:     Brian Bushnell (LBL, JGI)
 Group:      Applications/Life Sciences
 Source:     http://downloads.sourceforge.net/project/bbmap/BBMap_34.46.tar.gz
 Packager:   ARS - christopher.childers@ars.usda.gov
+Prefix:     /opt/apps
 
 #------------------------------------------------
 # INITIAL DEFINITIONS
