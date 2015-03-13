@@ -8,7 +8,7 @@ License: GPLv2
 Group: Applications/Life Sciences
 Source0:  %{name}_%{version}.tgz
 Packager: TACC - zaid.abdo@ars.usda.gov 
-Prefix: opt/apps
+Prefix: /work/03294/zabdo/apps 
 # BuildRoot: /var/tmp/%{name}_%{version}-buildroot
 
 #------------------------------------------------
@@ -30,8 +30,10 @@ Velvet currently takes in short read sequences, removes errors then produces hig
 # INSTALLATION DIRECTORY
 #------------------------------------------------
 # Buildroot: defaults to null if not included here
-%define INSTALL_DIR %{APPS}/%{name}/%{version}
-%define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
+#%define INSTALL_DIR %{APPS}/%{name}/%{version}
+%define INSTALL_DIR /work/03294/zabdo/apps/%{name}/%{version}
+#%define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
+%define MODULE_DIR /work/03294/zabdo/apps/modulefiles/%{name}
 %define MODULE_VAR TACC_VELVET
 
 #------------------------------------------------
