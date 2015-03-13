@@ -1,13 +1,12 @@
 Name:       maker
-Summary:    A portable and easy-to-configure genome annotation pipeline
 Version:    2.31.8
 Release:    1
 License:    Perl Artistic License 2.0
 Group: Applications/Life Sciences
 Source:     %{name}-%{version}.tgz
-#Source1:   postgresql-9.2.4.tar.gz
-#Patch1:    %{name}-%{version}.patch
 Packager:   TACC - vaughn@tacc.utexas.edu
+Summary:    A portable and easy-to-configure genome annotation pipeline
+Prefix: /opt/apps
 
 # Build using build_rpm.sh --intel=14 --mvapich2=2_0 maker-version.spec
 
@@ -76,7 +75,8 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %include ./include/%{PLATFORM}/system-load.inc
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-# Modules
+#------------------------------------------------
+## Install Steps Start
 module purge
 module load TACC
 module swap $TACC_FAMILY_COMPILER intel/14.0.1.106
@@ -144,12 +144,17 @@ Y
 EOF
 
 ./Build install
+## Install Steps End
+#------------------------------------------------
 
 cd $CWD
 cp -R ./bin ./data ./GMOD ./lib ./LICENSE ./MWAS ./perl ./README $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+
+#------------------------------------------------
+## Modulefile Start
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
@@ -182,11 +187,15 @@ append_path("PATH",         "%{MAKER_DATADIR}/exonerate/bin")
 prereq("perl/5.16.2")
 
 EOF
+## Modulefile End
+#------------------------------------------------
 
-#--------------
-#  Version file.
-#--------------
+## Lua syntax check
+if [ -f $SPEC_DIR/checkModuleSyntax ]; then
+    $SPEC_DIR/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+fi
 
+##  VERSION FILE
 cat > $RPM_BUILD_ROOT%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
