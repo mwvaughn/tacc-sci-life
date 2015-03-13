@@ -46,7 +46,6 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 # Start with a clean environment
 %include ./include/%{PLATFORM}/system-load.inc
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-cp -R ./* $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 ## Install Steps Start 
@@ -59,7 +58,7 @@ echo "BBmap is distributed as compiled Java. No compilation necessary."
 
 ## Install Steps End
 #------------------------------------------------
-
+cp -R ./* $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #cp ./bbmap *.pl $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
@@ -70,9 +69,6 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 #------------------------------------------------
 ## Modulefile Start
-
-rm -rf $RPM_BUILD_ROOT%{MODULE_DIR}
-mkdir -p $RPM_BUILD_ROOT%{MODULE_DIR}
 cat   >  $RPM_BUILD_ROOT%{MODULE_DIR}/%{version}.lua << 'EOF'
 
 help (
@@ -81,6 +77,7 @@ Documentation can be found online at http://sourceforge.net/projects/bbmap/
 The bbmap executable can be found in %{MODULE_VAR}_DIR
 
 Version %{version}
+
 ]])
 
 whatis("Name: BBMap")
