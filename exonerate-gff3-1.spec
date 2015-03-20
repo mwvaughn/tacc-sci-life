@@ -1,9 +1,9 @@
 Name: exonerate-gff3
-Version: 1
+Version: 2.3.0
 Release: 1
 License: GPL
 Group: Applications/Life Sciences
-Source:  https://github.com/hotdogee/exonerate-gff3/archive/exonerate-gff3-master.zip
+Source:  https://github.com/hotdogee/exonerate-gff3/archive/2.3.0.tar.gz
 Packager: NAL - monica.poelchau@ars.usda.gov
 Summary: This is an exonerate fork with added gff3 support. Original website with user guides: http://www.ebi.ac.uk/~guy/exonerate/
 Prefix: /opt/apps
@@ -23,7 +23,7 @@ Prefix: /opt/apps
 %define INSTALL_DIR %{APPS}/%{name}/%{version}
 %define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
 %define MODULE_VAR  %{MODULE_VAR_PREFIX}EXONERATE-GFF3
-%define PNAME       exonerate-gff3-master
+%define PNAME       exonerate-gff3
 
 ## PACKAGE DESCRIPTION
 %description
@@ -35,8 +35,7 @@ This is an exonerate fork with added gff3 support. Original website with user gu
 rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 ## SETUP
-#%setup -n %{PNAME}-%{version}
-%setup -n exonerate-gff3-master
+%setup -n %{PNAME}-%{version}
 
 ## BUILD
 %build
@@ -57,8 +56,9 @@ module purge
 module load TACC
 module swap $TACC_FAMILY_COMPILER gcc
 
-./configure
-make 
+./configure --prefix=%{INSTALL_DIR}
+make
+make DESTDIR=$RPM_BUILD_ROOT install
 #check to make sure this works
 #make DESTDIR=$RPM_BUILD_ROOT install
 ## Install Steps End
@@ -66,9 +66,9 @@ make
 
 #cp -R ./bowtie2* ./doc ./scripts $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #this may not be necesary if you can do make install as above
-cp ./src/program/exonerate $RPM_BUILD_ROOT/%{INSTALL_DIR}    
-cp -R ./doc $RPM_BUILD_ROOT/%{INSTALL_DIR}
-cp -R ./test $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#cp ./src/program/exonerate $RPM_BUILD_ROOT/%{INSTALL_DIR}    
+#cp -R ./doc $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#cp -R ./test $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 # MODULEFILE CREATION
@@ -97,8 +97,8 @@ whatis("URL: https://github.com/hotdogee/exonerate-gff3")
 whatis("Description: exonerate fork with added gff3 support ")
 
 setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-setenv("%{MODULE_VAR}_SCRIPTS","%{INSTALL_DIR}/scripts")
-prepend_path("PATH"       ,"%{INSTALL_DIR}")
+setenv("%{MODULE_VAR}_BIN","%{INSTALL_DIR}/bin")
+prepend_path("PATH"       ,"%{INSTALL_DIR}/bin")
 
 prereq("perl")
 
