@@ -1,13 +1,12 @@
-Summary:    A flexible suite of utilities for comparing genomic features
 Name:       bedtools
-Version:    2.21.1
+Version:    2.22.1
 Release:    1
 License:    GPLv2
 Group: Applications/Life Sciences
 Source:     https://github.com/arq5x/bedtools2/releases/download/v2.22.1/bedtools-2.22.1.tar.gz
 Packager:   TACC - vaughn@tacc.utexas.edu
-# This is the actual installation directory - Careful
-BuildRoot:  /var/tmp/%{name}-%{version}-buildroot
+Summary:    A flexible suite of utilities for comparing genomic features
+Prefix:     /opt/apps
 
 #------------------------------------------------
 # INITIAL DEFINITIONS
@@ -26,11 +25,9 @@ BuildRoot:  /var/tmp/%{name}-%{version}-buildroot
 %define MODULE_VAR  %{MODULE_VAR_PREFIX}BEDTOOLS
 %define PNAME       bedtools
 
-#------------------------------------------------
-# PACKAGE DESCRIPTION
-#------------------------------------------------
+## PACKAGE DESCRIPTION
 %description
-he bedtools utilities are a swiss-army knife of tools for a wide-range of genomics analysis tasks. The most widely-used tools enable genome arithmetic: that is, set theory on the genome. For example, bedtools allows one to intersect, merge, count, complement, and shuffle genomic intervals from multiple files in widely-used genomic file formats such as BAM, BED, GFF/GTF, VCF.
+The bedtools utilities are a swiss-army knife of tools for a wide-range of genomics analysis tasks. The most widely-used tools enable genome arithmetic: that is, set theory on the genome. For example, bedtools allows one to intersect, merge, count, complement, and shuffle genomic intervals from multiple files in widely-used genomic file formats such as BAM, BED, GFF/GTF, VCF.
 
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
@@ -43,6 +40,11 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ## BUILD
 %build
 
+#------------------------------------------------
+# INSTALL
+#------------------------------------------------
+%install
+
 # Start with a clean environment
 %include ./include/%{PLATFORM}/system-load.inc
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
@@ -54,7 +56,6 @@ module load TACC
 module swap $TACC_FAMILY_COMPILER gcc
 
 make LDFLAGS="-Wl,-rpath,$GCC_LIB"
-
 ## Install Steps End
 #------------------------------------------------
 
