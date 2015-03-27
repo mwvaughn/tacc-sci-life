@@ -1,5 +1,4 @@
 *.log
-build_*
 .svn
 .svn/*
 
