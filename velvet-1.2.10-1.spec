@@ -24,8 +24,6 @@ Prefix: /work/03294/zabdo/apps
 %description
 Velvet is a de novo genomic assembler specially designed for short read sequencing technologies, such as Solexa or 454, developed by Daniel Zerbino and Ewan Birney at the European Bioinformatics Institute (EMBL-EBI), near Cambridge, in the United Kingdom.
 
-Velvet currently takes in short read sequences, removes errors then produces high quality unique contigs. It then uses paired-end read and long read information, when available, to retrieve the repeated areas between contigs. 
-
 #------------------------------------------------
 # INSTALLATION DIRECTORY
 #------------------------------------------------
