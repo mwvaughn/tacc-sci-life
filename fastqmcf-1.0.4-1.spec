@@ -1,12 +1,12 @@
-Name:       bwa
-Summary:    Burrows-Wheeler Alignment Tool
-Version:    0.7.12
-Release:    1
-License:    GPLv3
-Vendor:     Heng Li at the Sanger Institute
+Name: fastqmcf
+Version: 1.0.4
+Release: 1
+License: MIT
 Group: Applications/Life Sciences
-Source:     http://sourceforge.net/projects/bio-bwa/files/bwa-0.7.12.tar.bz2
-Packager:   TACC - vaughn@tacc.utexas.edu
+Source:  fastqmcf-1.0.4.zip
+Packager: ARS - jun-wei.lin@ars.usda.gov
+Summary: fastq-mcf sequence quality filter, clipping and processor.
+Prefix: /opt/apps
 
 #------------------------------------------------
 # INITIAL DEFINITIONS
@@ -18,19 +18,19 @@ Packager:   TACC - vaughn@tacc.utexas.edu
 ## Compiler Family Definitions
 # %include ./include/%{PLATFORM}/compiler-defines.inc
 ## MPI Family Definitions
-# %include ./include/%{PLATFORM}/mpi-defines.inc## Compiler Family Definitions
+# %include ./include/%{PLATFORM}/mpi-defines.inc
 
 %define INSTALL_DIR %{APPS}/%{name}/%{version}
 %define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}BWA
-%define PNAME       bwa
+%define MODULE_VAR  %{MODULE_VAR_PREFIX}FASTQMCF
+%define PNAME       fastqmcf
 
 ## PACKAGE DESCRIPTION
 %description
-BWA is a software package for mapping low-divergent sequences against a large reference genome, such as the human genome. It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM. The first algorithm is designed for Illumina sequence reads up to 100bp, while the rest two for longer sequences ranged from 70bp to 1Mbp. BWA-MEM and BWA-SW share similar features such as long-read support and split alignment, but BWA-MEM, which is the latest, is generally recommended for high-quality queries as it is faster and more accurate. BWA-MEM also has better performance than BWA-backtrack for 70-100bp Illumina reads.
+Scans a sequence file for adapters, and, based on a log-scaled threshold, determines a set of clipping parameters and performs clipping. Also does skewing detection and quality filtering.
 
 ## PREP
-# Use -n <name> if source file different from <name>-<version>.tar.gz
+Use -n <name> if source file different from <name>-<version>.tar.gz
 %prep
 rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
@@ -49,18 +49,26 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 %include ./include/%{PLATFORM}/system-load.inc
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
+
 #------------------------------------------------
-## Install Steps Start 
+## Install Steps Start
 module purge
 module load TACC
-module swap $TACC_FAMILY_COMPILER gcc
+module load perl
+module load gsl
 
-make
+make CFLAGS="-O3 -I. -I$TACC_GSL_INC -L$TACC_GSL_LIB"
 
 ## Install Steps End
 #------------------------------------------------
 
-cp ./bwa *.pl $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp fastq-clipper $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp fastq-mcf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp fastq-multx $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp fastq-join $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp fastq-stats $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp sam-stats $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp varcall $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 # MODULEFILE CREATION
@@ -73,21 +81,28 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-Documentation can be found online at http://bio-bwa.sourceforge.net/bwa.shtml
-The bwa executable can be found in %{MODULE_VAR}_DIR
+The %{PNAME} module file defines the following environment variables:
+%{MODULE_VAR}_DIR for the location of the %{name}
+distribution. Documentation can be found online at https://code.google.com/p/ea-utils/wiki/FastqMcf
+
+NOTE: This module provides the fastq-mcf, fastq-multx, fastq-join, varcall binaries
 
 Version %{version}
+
 ]])
 
-whatis("Name: bwa")
+whatis("Name: Fastqmcf")
 whatis("Version: %{version}")
-whatis("Category: computational biology, genomics")
-whatis("Keywords:  Biology, Genomics, Alignment, Sequencing")
-whatis("Description: Burrows-Wheeler Alignment Tool")
-whatis("URL: http://bio-bwa.sourceforge.net/")
+whatis("Category: Computational biology, Genomics")
+whatis("Keywords: Biology, Genomics, Alignment, Sequencing")
+whatis("URL: https://code.google.com/p/ea-utils/wiki/FastqMcf")
+whatis("Description: fastq-mcf sequence quality filter, clipping and processor")
 
 setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
 prepend_path("PATH"       ,"%{INSTALL_DIR}")
+
+prereq("perl")
+prereq("gsl")
 
 EOF
 ## Modulefile End
@@ -98,11 +113,11 @@ if [ -f $SPEC_DIR/checkModuleSyntax ]; then
     $SPEC_DIR/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
 fi
 
-## VERSION FILE
+##  VERSION FILE
 cat > $RPM_BUILD_ROOT%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{PNAME}-%{version}
+## version file for %{name}-%{version}
 ##
 
 set     ModulesVersion      "%{version}"
@@ -112,9 +127,9 @@ EOF
 # FILES SECTION
 #------------------------------------------------
 #%files -n %{name}-%{comp_fam_ver}
-%files
+%files 
 
-# Define files permissions, user, and group
+# Define files permisions, user and group
 %defattr(755,root,root,-)
 %{INSTALL_DIR}
 %{MODULE_DIR}
@@ -127,3 +142,4 @@ cd /tmp
 
 # Remove the installation files now that the RPM has been generated
 rm -rf $RPM_BUILD_ROOT
+

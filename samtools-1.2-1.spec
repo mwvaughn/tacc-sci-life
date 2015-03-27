@@ -1,12 +1,13 @@
-Name:       bwa
-Summary:    Burrows-Wheeler Alignment Tool
-Version:    0.7.12
-Release:    1
-License:    GPLv3
-Vendor:     Heng Li at the Sanger Institute
+# $Id$
+
+Name: samtools
+Version: 1.2
+Release: 1
+Summary: Utilities for manipulating alignments in the SAM format.
+License: GPL
 Group: Applications/Life Sciences
-Source:     http://sourceforge.net/projects/bio-bwa/files/bwa-0.7.12.tar.bz2
-Packager:   TACC - vaughn@tacc.utexas.edu
+Source:  http://downloads.sourceforge.net/project/samtools/samtools/1.2/samtools-1.2.tar.bz2
+Packager: TACC - vaughn@tacc.utexas.edu, jfonner@tacc.utexas.edu
 
 #------------------------------------------------
 # INITIAL DEFINITIONS
@@ -18,16 +19,16 @@ Packager:   TACC - vaughn@tacc.utexas.edu
 ## Compiler Family Definitions
 # %include ./include/%{PLATFORM}/compiler-defines.inc
 ## MPI Family Definitions
-# %include ./include/%{PLATFORM}/mpi-defines.inc## Compiler Family Definitions
+# %include ./include/%{PLATFORM}/mpi-defines.inc
 
 %define INSTALL_DIR %{APPS}/%{name}/%{version}
 %define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}BWA
-%define PNAME       bwa
+%define MODULE_VAR  %{MODULE_VAR_PREFIX}SAMTOOLS
+%define PNAME       samtools
 
 ## PACKAGE DESCRIPTION
 %description
-BWA is a software package for mapping low-divergent sequences against a large reference genome, such as the human genome. It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM. The first algorithm is designed for Illumina sequence reads up to 100bp, while the rest two for longer sequences ranged from 70bp to 1Mbp. BWA-MEM and BWA-SW share similar features such as long-read support and split alignment, but BWA-MEM, which is the latest, is generally recommended for high-quality queries as it is faster and more accurate. BWA-MEM also has better performance than BWA-backtrack for 70-100bp Illumina reads.
+Samtools is a set of utilities that manipulate alignments in the BAM format. It imports from and exports to the SAM (Sequence Alignment/Map) format, does sorting, merging and indexing, and allows to retrieve reads in any regions swiftly.
 
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
@@ -50,44 +51,56 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
-## Install Steps Start 
+## Install Steps Start
 module purge
 module load TACC
 module swap $TACC_FAMILY_COMPILER gcc
 
 make
-
+make prefix=%{INSTALL_DIR} DESTDIR=$RPM_BUILD_ROOT install
 ## Install Steps End
 #------------------------------------------------
 
-cp ./bwa *.pl $RPM_BUILD_ROOT/%{INSTALL_DIR}
+# cp -R ./samtools ./bcftools ./misc ./examples $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p         $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+cp -R ./libbam.a $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+mkdir -p  $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+cp -R *.h $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
 
 #------------------------------------------------
 # MODULEFILE CREATION
 #------------------------------------------------
-rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
-mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+rm   -rf $RPM_BUILD_ROOT%{MODULE_DIR}
+mkdir -p $RPM_BUILD_ROOT%{MODULE_DIR}
 
 #------------------------------------------------
 ## Modulefile Start
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+cat   >  $RPM_BUILD_ROOT%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-Documentation can be found online at http://bio-bwa.sourceforge.net/bwa.shtml
-The bwa executable can be found in %{MODULE_VAR}_DIR
+The %{name} module file defines the following environment variables:
+%{MODULE_VAR}_DIR, %{MODULE_VAR}_INC, and %{MODULE_VAR}_LIB
+associated with %{name}
 
 Version %{version}
 ]])
 
-whatis("Name: bwa")
+whatis("Name: samtools")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
-whatis("Keywords:  Biology, Genomics, Alignment, Sequencing")
-whatis("Description: Burrows-Wheeler Alignment Tool")
-whatis("URL: http://bio-bwa.sourceforge.net/")
+whatis("Keywords: Biology, Genomics, Quality Control, Utility, Sequencing, Genotyping, Resequencing, SNP")
+whatis("URL: http://samtools.sourceforge.net/")
+whatis("Description: SAM Tools provide various utilities for manipulating alignments in the SAM format, including sorting, merging, indexing and generating alignments in a per-position format.")
 
-setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-prepend_path("PATH"       ,"%{INSTALL_DIR}")
+
+prepend_path("PATH",              "%{INSTALL_DIR}/bin")
+prepend_path("PATH",              "%{INSTALL_DIR}/bcftools")
+prepend_path("PATH",              "%{INSTALL_DIR}/misc")
+
+setenv (     "%{MODULE_VAR}_DIR", "%{INSTALL_DIR}/")
+setenv (     "%{MODULE_VAR}_BIN", "%{INSTALL_DIR}/bin")
+setenv (     "%{MODULE_VAR}_INC", "%{INSTALL_DIR}/include")
+setenv (     "%{MODULE_VAR}_LIB", "%{INSTALL_DIR}/lib")
 
 EOF
 ## Modulefile End
@@ -102,7 +115,7 @@ fi
 cat > $RPM_BUILD_ROOT%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{PNAME}-%{version}
+## version file for %{name}-%{version}
 ##
 
 set     ModulesVersion      "%{version}"
@@ -111,7 +124,6 @@ EOF
 #------------------------------------------------
 # FILES SECTION
 #------------------------------------------------
-#%files -n %{name}-%{comp_fam_ver}
 %files
 
 # Define files permissions, user, and group
@@ -122,8 +134,5 @@ EOF
 ## CLEAN UP
 %post
 %clean
-# Make sure we are not within one of the directories we try to delete
-cd /tmp
-
-# Remove the installation files now that the RPM has been generated
 rm -rf $RPM_BUILD_ROOT
+

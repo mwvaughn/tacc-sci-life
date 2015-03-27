@@ -6,12 +6,6 @@
 # Load Desired Compiler for RPM Builds
 #-----------------------------------------
 
-if [ -f "$BASH_ENV" ]; then
-  export MODULEPATH=/opt/apps/modulefiles:/opt/modulefiles:/share/apps/modulefiles
-  . $BASH_ENV
-  module purge
-fi
-
 %if %{undefined comp_fam}
   %define comp_fam error
 %endif
