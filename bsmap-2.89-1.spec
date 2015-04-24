@@ -41,7 +41,7 @@ BSMAP is a short reads mapping program for bisulfite sequencing in DNA methylati
 [ -n "$RPM_BUILD_ROOT" -a "$RPM_BUILD_ROOT" != / ] && rm -rf ${RPM_BUILD_ROOT}
 
 ## SETUP
-%setup -n %{PNAME}-%{version}
+%setup -n %{name}-%{version}
 
 ## BUILD
 %build
@@ -66,12 +66,22 @@ patch param.h -i - <<EOF
 11a10
 > #include<unistd.h>
 EOF
-# patch CC to be CXX
-sed -i "s/CC/CXX/g" makefile
+# remove windows CR
+sed -i "s///g" makefile
+# patch makefile
+patch makefile -i - <<EOF
+4c4
+< FLAGS= -DMAXHITS=1000 -DTHREAD -funroll-loops -Lsamtools -Isamtools -Lgzstream -Igzstream -O3 -m64
+---
+> override FLAGS+= -DMAXHITS=1000 -DTHREAD -funroll-loops -Lsamtools -Isamtools -Lgzstream -Igzstream -O3 -m64
+EOF
+# patch CC to be CXX                                           
+sed -i "s/CC/CXX/g" makefile                                   
 
 # Make and install
-make CC=$CC CXX=$CXX
-make CC=$CC CXX=$CXX BIN=$RPM_BUILD_ROOT/%{INSTALL_DIR} install
+RPATH="-Wl,-rpath,"$GCC_LIB
+make CC=$CC CXX=$CXX FLAGS=$RPATH CFLAGS=$RPATH
+make BIN=$RPM_BUILD_ROOT/%{INSTALL_DIR} install
 
 ## Install Steps End
 
@@ -82,7 +92,8 @@ rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 #------------------------------------------------
-## Modulefile Start
+# Modulefile Start
+#------------------------------------------------
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
@@ -104,7 +115,6 @@ whatis("URL: https://code.google.com/p/bsmap/")
 setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}/")
 prepend_path("PATH"       ,"%{INSTALL_DIR}/")
 prereq("samtools","python")
-]])
 EOF
 ## Modulefile End
 #------------------------------------------------
