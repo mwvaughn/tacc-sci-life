@@ -1,7 +1,7 @@
 Name:      bsmap
 Summary:   BSMAP for Methylation
 Version:   2.89
-Release:   1
+Release:   2
 License:   GPL
 Vendor:    Brown University
 Group:     Applications/Life Sciences
