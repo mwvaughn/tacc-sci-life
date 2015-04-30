@@ -29,7 +29,7 @@
   %define comp_fam_ver intel15
   %define comp_fam_name Intel
   %define is_intel 1
-  %define comp_module intel/15.0.1
+  %define comp_module intel/15.0.2
 %endif
 
 %if "%{is_gcc44}" == "1"
