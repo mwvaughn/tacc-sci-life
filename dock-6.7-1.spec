@@ -16,8 +16,15 @@ Prefix:     /opt/apps
 %include ./include/system-defines.inc
 %include ./include/%{PLATFORM}/rpm-dir.inc
 
-# For the intel compiler
+# These commands work on stampede:
 # ./build_rpm.sh --intel=15 dock-6.7-1.spec 
+# ./build_rpm.sh --gcc=49   dock-6.7-1.spec
+#
+# These commands work on ls4:
+# ./build_rpm.sh --intel=11 dock-6.7-1.spec
+# ./build_rpm.sh --gcc=44   dock-6.7-1.spec
+#
+# (circa May 2015)
 %include ./include/%{PLATFORM}/compiler-defines.inc
 
 # Some other defines
@@ -47,8 +54,15 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 # BUILD SECTION
 #------------------------------------------------
 %build
+# This is necessary because DOCK labels the "gcc" family as the "gnu" family
+%if "%{comp_fam}" == "gcc"
+    %define comp_fam_for_dock gnu
+%else 
+    %define comp_fam_for_dock %{comp_fam}
+%endif
+
 cd install/
-./configure %{comp_fam}
+./configure %{comp_fam_for_dock}
 
 
 #------------------------------------------------
@@ -68,12 +82,17 @@ cd install/
 # Then make a directory for installing the software
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-# Load the desired modules
+# Load the desired modules (I unload gcc / intel to avoid conflicts arising from
+# the compiler-load include below)
 module purge
 module load TACC
+module unload gcc intel
 %include ./include/compiler-load.inc
 
 # Go back into the install directory
+# I have found that building the rpm from this spec file will occasionally and
+# randomly fail partway through "make". Logging out and back in fixes it for
+# whatever reason. (Probably magic)
 cd $RPM_BUILD_DIR/%{PNAME}-%{version}/install
 make
 
@@ -97,6 +116,7 @@ help (
 This module loads %{PNAME} built with %{comp_fam}.
 Documentation for %{PNAME} is available online at http://dock.compbio.ucsf.edu/
 The executables can be found in %{MODULE_VAR}_BIN
+The parameter files can be found in %{MODULE_VAR}_PARAMS
 
 Version %{version}
 ]])
@@ -105,7 +125,7 @@ whatis("Name: %{PNAME}")
 whatis("Version: %{version}")
 whatis("Category: life sciences, computational biology, structural biology")
 whatis("Keywords:  Biology, Chemistry, Structural Biology, Docking")
-whatis("Description: DOCK is a structure-based docking program used to predict the binding mode of small molecule ligands to target receptors, including proteins.")
+whatis("Description: DOCK is a structure-based docking program used to predict the binding mode of small molecule ligands to target receptors, such as proteins.")
 whatis("URL: http://dock.compbio.ucsf.edu/")
 
 setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}/")
