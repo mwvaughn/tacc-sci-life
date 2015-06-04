@@ -61,6 +61,7 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
     %define comp_fam_for_dock %{comp_fam}
 %endif
 
+patch -N -p0 < install/bugfix.1
 cd install/
 ./configure %{comp_fam_for_dock}
 
@@ -95,6 +96,9 @@ module unload gcc intel
 # whatever reason. (Probably magic)
 cd $RPM_BUILD_DIR/%{PNAME}-%{version}/install
 make
+make clean
+./configure %{comp_fam_for_dock}.parallel
+make dock
 
 # Copy the binaries
 cp -r ../bin/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/
