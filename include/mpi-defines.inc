@@ -13,19 +13,31 @@
 %endif
 
 ########################################################################
-##  The idea is to make all decisions in the here then mpi-load.inc 
+##  The idea is to make all decisions in the here then mpi-load.inc
 ##  is simple.
 ########################################################################
 
 
-%if "%{is_mvapich2}" == "1" 
+%if "%{is_mvapich2}" == "1"
   %if %{undefined mpiV}
-    %define mpi_label 1_9
-    %define mpi_module_version 1.9a2
+    %define mpi_label 2_1
+    %define mpi_module_version 2.1
   %endif
   %if "%{mpiV}" == "1_9"
     %define mpi_label 1_9
     %define mpi_module_version 1.9a2
+  %endif
+  %if "%{mpiV}" == "2_0"
+    %define mpi_label 2_0
+    %define mpi_module_version 2.0b
+  %endif
+  %if "%{mpiV}" == "2_0_1"
+    %define mpi_label 2_0_1
+    %define mpi_module_version 2.0.1
+  %endif
+  %if "%{mpiV}" == "2_1"
+    %define mpi_label 2_1
+    %define mpi_module_version 2.1
   %endif
 
   %define mpi_fam     mvapich2
@@ -33,14 +45,18 @@
   %define mpi_module  %{mpi_fam}/%{mpi_module_version}
 %endif
 
-%if "%{is_impi}" == "1" 
+%if "%{is_impi}" == "1"
   %if %{undefined mpiV}
-    %define mpi_label 4_1
-    %define mpi_module_version 4.1.0.024
+    %define mpi_label 5_0
+    %define mpi_module_version 5.0.2
   %endif
   %if "%{mpiV}" == "4_1"
     %define mpi_label 4_1
     %define mpi_module_version 4.1.0.024
+  %endif
+  %if "%{mpiV}" == "5_0"
+    %define mpi_label 5_0
+    %define mpi_module_version 5.0.2
   %endif
   %define mpi_fam     impi
   %define mpi_fam_ver impi_%{mpi_label}

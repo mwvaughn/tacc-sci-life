@@ -210,7 +210,7 @@ EOF
 #------------------------------------------------
 # FILES SECTION
 #------------------------------------------------
-%files
+%files -n %{name}-%{comp_fam_ver}-%{mpi_fam_ver}
 
 # Define files permisions, user and group
 %defattr(755,root,root,-)
