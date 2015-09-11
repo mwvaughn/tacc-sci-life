@@ -21,7 +21,7 @@ else
     echo "Build directory tree in the current directory? (y/n)[n] "
     read userInput
     if [ "$userInput" == "y" ] || [ "$userInput" == "Y" ]; then
-        baseDir=$DIR
+        baseDir=$PWD
     else
         echo "Exiting..."
         echo
