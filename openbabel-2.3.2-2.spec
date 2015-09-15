@@ -40,9 +40,6 @@ Group: Applications/Life Sciences
 Open Babel is a chemical toolbox designed to speak the many languages of chemical data. It's an open, collaborative project allowing anyone to search, convert, analyze, or store data from molecular modeling, chemistry, solid-state materials, biochemistry, or related areas. 
 
 
-
-
-
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
 %prep
@@ -108,7 +105,7 @@ Open Babel is a chemical toolbox designed to speak the many languages of chemica
     mkdir %{PNAME}-%{version}
     mkdir %{PNAME}-%{version}-cmake/build/
     cd %{PNAME}-%{version}-cmake/build/
-    cmake ../ -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_DIR/%{PNAME}-%{version} -Wno-dev ../
+    cmake -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_DIR/%{PNAME}-%{version} -Wno-dev ../
     make
     make install
     #make DESTDIR=$RPM_BUILD_ROOT install 
