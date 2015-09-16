@@ -1,14 +1,11 @@
-Summary: SRA Toolkit
 Name: sratoolkit
-Version: 2.3.4
-Release: 2
+Version: 2.4.3
+Release: 1
 License: Public Domain
-Vendor: National Center for Biotechnology Information
 Group: Applications/Life Sciences
-Source: sratoolkit.2.3.4-2-centos_linux64.tar.gz
-#Source0:  %{name}.%{version}-%{release}-centos_linux64.tar.gz
-Packager: TACC - wonaya@tacc.utexas.edu
-BuildRoot: /var/tmp/%{name}_%{version}-buildroot
+Source: http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.4.3/sratoolkit.2.4.3-centos_linux64.tar.gz
+Packager: TACC - jawon@tacc.utexas.edu
+Summary: SRA Toolkit
 
 #------------------------------------------------
 # BASIC DEFINITIONS
