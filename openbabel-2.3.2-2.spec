@@ -106,7 +106,7 @@ Open Babel is a chemical toolbox designed to speak the many languages of chemica
     mkdir %{PNAME}-%{version}-cmake/build/
     cd %{PNAME}-%{version}-cmake/build/
     cmake -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_DIR/%{PNAME}-%{version} -Wno-dev ../
-    make
+    make -j 2
     make install
     #make DESTDIR=$RPM_BUILD_ROOT install 
 
