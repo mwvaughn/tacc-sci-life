@@ -28,6 +28,7 @@
 # Module macros
 %define MODULE_PREFIX   /tmpmod 
 %define MODULE_DIR      %{MODULE_PREFIX}/%{MODULE_SUFFIX}
+%define MODULE_FILENAME %{version}.lua
 
 # Install macros
 %define INSTALL_PREFIX  /tmprpm
