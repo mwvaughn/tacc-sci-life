@@ -1,10 +1,10 @@
-Name: aspera-ascp
-Version: 3.5.4.102989
+Name: jellyfish
+Version: 2.2.3
 Release: 1
-License: IBM License
-Vendor: IBM
+License: GPL
+Source: https://github.com/gmarcais/Jellyfish/releases/download/v2.2.3/jellyfish-2.2.3.tar.gz
 Packager: TACC - gzynda@tacc.utexas.edu
-Summary: Aspera aspc client
+Summary: A fast, lock-free approach for efficient parallel counting of occurrences of k-mers.
 
 #------------------------------------------------
 # INITIAL DEFINITIONS
@@ -20,22 +20,28 @@ Summary: Aspera aspc client
 ## directory and name definitions for relocatable RPMs
 %include ./include/name-defines.inc
 
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}SRATOOLKIT
-%define PNAME       aspera-ascp
+%define MODULE_VAR  %{MODULE_VAR_PREFIX}JELLYFISH
+%define PNAME       jellyfish
 
 %package %{PACKAGE}
-Summary: Aspera aspc client
+Summary: A fast, lock-free approach for efficient parallel counting of occurrences of k-mers.
 Group: Applications/Life Sciences
 %description package
 
 %package %{MODULEFILE}
-Summary: Aspera aspc client
+Summary: A fast, lock-free approach for efficient parallel counting of occurrences of k-mers.
 Group: Applications/Life Sciences
 %description modulefile
 
 ## PACKAGE DESCRIPTION
 %description
-The ascp (Aspera secure copy) executable is a command-line fasp transfer program.
+Jellyfish is a tool for fast, memory-efficient counting of k-mers in DNA. A k-mer is a substring of length k, and counting the occurrences of all such substrings is a central step in many analyses of DNA sequence. Jellyfish can count k-mers using an order of magnitude less memory and an order of magnitude faster than other k-mer counting packages by using an efficient encoding of a hash table and by exploiting the "compare-and-swap" CPU instruction to increase parallelism.
+
+JELLYFISH is a command-line program that reads FASTA and multi-FASTA files containing DNA sequences. It outputs its k-mer counts in a binary format, which can be translated into a human-readable text format using the "jellyfish dump" command, or queried for specific k-mers with "jellyfish query". See the UserGuide provided on Jellyfish's home page for more details.
+
+If you use Jellyfish in your research, please cite:
+
+Guillaume Marcais and Carl Kingsford, A fast, lock-free approach for efficient parallel counting of occurrences of k-mers. Bioinformatics (2011) 27(6): 764-770 (first published online January 7, 2011) doi:10.1093/bioinformatics/btr011
 
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
@@ -49,7 +55,7 @@ The ascp (Aspera secure copy) executable is a command-line fasp transfer program
 %endif
 
 ## SETUP
-#%setup
+%setup -n %{PNAME}-%{version}
 
 ## BUILD
 %build
@@ -74,33 +80,15 @@ The ascp (Aspera secure copy) executable is a command-line fasp transfer program
 module purge
 module load TACC python
 
-wget http://download.asperasoft.com/download/sw/ascp-client/3.5.4/ascp-install-3.5.4.102989-linux-64.sh
+## Configure
+./configure --prefix=%{INSTALL_DIR} CC=icc CXX=icpc
 
-patch ascp-install-3.5.4.102989-linux-64.sh -i - <<'EOF'
-11c11
-< if test `id -u` -ne 0; then echo You must be root; exit 1; fi
----
-> #if test `id -u` -ne 0; then echo You must be root; exit 1; fi
-16c16
-< mkdir -p /usr/local/bin /usr/local/share/man/man1
----
-> mkdir -p $PREFIX/bin $PREFIX/share/man/man1
-22c22
-< PARAMS="xzpo -C /usr/local"
----
-> PARAMS="xzpo -C $PREFIX"
-27c27
-< ln -sf /usr/local/bin/ascp /usr/bin
----
-> #ln -sf $PREFIX/bin/ascp /usr/bin
-EOF
-
-export PREFIX=$RPM_BUILD_ROOT/%{INSTALL_DIR}
+## Make
+make -j 16
 
 ## Install Steps End
 #--------------------------------------
-sh ascp-install-3.5.4.102989-linux-64.sh
-
+make install DESTDIR=$RPM_BUILD_ROOT
 %endif
 #--------------------------------------
 
@@ -119,26 +107,28 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
 The %{PNAME} module file defines the following environment variables:
-%{MODULE_VAR}_DIR for the location of the %{name}
-distribution. Documentation can be found online at http://download.asperasoft.com/download/docs/ascp/3.5.2/html/index.html#dita/ascp_usage.html
+%{MODULE_VAR}_DIR and %{MODULE_VAR}_SCRIPTS for the location of the %{name}
+distribution. Documentation can be found online at http://www.xmlsoft.org/
 
 Version %{version}
 
 ]])
 
-whatis("Name: aspera-ascp")
+whatis("Name: jellyfish")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
-whatis("Keywords: transfer, ncbi, utility, genomics")
-whatis("Description: Aspera aspc client")
-whatis("URL: http://asperasoft.com/software/transfer-clients/")
+whatis("Keywords: kmer, k-mer, bloom")
+whatis("Description: A fast, lock-free approach for efficient parallel counting of occurrences of k-mers.")
+whatis("URL: https://github.com/gmarcais/Jellyfish")
 
-local mod_dir = "%{INSTALL_DIR}"
+local inst_dir = "%{INSTALL_DIR}"
 
-setenv("%{MODULE_VAR}_DIR",	mod_dir)
+setenv("%{MODULE_VAR}_DIR",	inst_dir)
 
-prepend_path("PATH",		pathJoin(mod_dir,"bin"))
-prepend_path("MANPATH",		pathJoin(mod_dir,"share/man"))
+prepend_path("PATH",		pathJoin(inst_dir,"bin"))
+prepend_path("INCLUDE",		pathJoin(inst_dir,"include"))
+prepend_path("LD_LIBRARY_PATH",	pathJoin(inst_dir,"lib"))
+prepend_path("MANPATH",		pathJoin(inst_dir,"share/man"))
 
 EOF
 ## Modulefile End
