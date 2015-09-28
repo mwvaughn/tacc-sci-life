@@ -32,7 +32,7 @@ fi
 
 # OK, let's give it a try
 echo "Installing RPM"
-rpm --dbpath ${prefix}/db --prefix $prefix -Uvh --force --nodeps $rpmFile
+rpm --dbpath ${prefix}/db --prefix $prefix -ivh --force --nodeps $rpmFile
 
 echo "Editing modulefile paths"
 #figure out where the modulefile is
