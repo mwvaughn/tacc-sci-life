@@ -111,10 +111,10 @@ if [ -n "$help" ]; then
   echo "  -oV | --openmpi=V  : build with openmpi   with version V"
   echo ""
   echo "To specify a version of a compiler or MPI stack do:"
-  echo "     $0 -i15 -m2_1 name.spec"
+  echo "     $0 -i11 -m1.8 name.spec"
   echo "OR"
-  echo "     $0 --intel=15 --mvapich2=2_1 name.spec"
-  echo "will use intel 15 and mvapich2 version 2.1"
+  echo "     $0 --intel=11 --mvapich2=1.8 name.spec"
+  echo "will use intel 11 and mvapich2 version 1.8"
   echo ""
   exit
 fi
@@ -124,7 +124,6 @@ eval "compV=\$${comp}V"
 eval "mpiV=\$${mpi}V"
 
 mpiV=$(echo $mpiV | sed -e 's/\./_/g')
-compV=$(echo $compV | sed -e 's/\./_/g')
 
 # Build command line:
 
@@ -171,15 +170,15 @@ if [ -n "$log" ]; then
   argA=(${argA[@]} "2>&1 | tee -a $logName.log")
 fi
   
-# eval parseSpec "${pSargA[@]}"
-# if [ "$?" != 0 ]; then
-#   if [ "$force" == 0 ]; then
-#     echo ""
-#     echo "Quitting:  If you wish to build it anyway add \"--force\" to the command line"
-#     echo ""
-#     exit
-#   fi
-# fi
+eval ./include/parseSpec "${pSargA[@]}"
+if [ "$?" != 0 ]; then
+  if [ "$force" == 0 ]; then
+    echo ""
+    echo "Quitting:  If you wish to build it anyway add \"--force\" to the command line"
+    echo ""
+    exit
+  fi
+fi
 
 if [ -n "$show" ]; then
   echo "rpmbuild  ${argA[@]} "

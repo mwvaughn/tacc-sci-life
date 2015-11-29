@@ -51,7 +51,7 @@ elif [[ "$baseDir" =~ .*rpmbuild.* ]]; then
 fi
 
 
-# if ! [[ "$scriptPath" =~ .*rpmbuild.* ]]; then 
+# if ! [[ "$scriptPath" =~ .*rpmbuild.* ]]; then
 #     echo "The script is running from the path $scriptPath"
 #     echo "To setup directories, you need this script to reside somewhere inside an "rpmbuild" directory."
 #     echo "We recommend cloning the tacc-sci-life repository into a directory called SPECS like this:"
@@ -65,11 +65,11 @@ if [ ! -d "${baseDir}/rpmbuild" ]; then
 fi
 baseDir=${baseDir}/rpmbuild
 
-for systemName in ls4 stampede maverick wrangler; do
+for systemName in hikari ls5 ls4 stampede maverick wrangler; do
     if [ ! -d $baseDir/$systemName ]; then
         echo "creating $systemName directory"
         mkdir -p $baseDir/$systemName
-    fi    
+    fi
     for subDir in BUILD RPMS SOURCES SRPMS; do
         if [ ! -d $baseDir/$systemName/$subDir ]; then
             echo "creating $systemName/$subDir directory"
