@@ -84,8 +84,6 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 ## Install Steps Start
-#module purge
-module load TACC
 module load gcc/4.9.3
 
 make
