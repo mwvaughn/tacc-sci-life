@@ -2,7 +2,7 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-usage="Usage: $0 <dir>"
+usage="Usage: $0 <dir> \n Builds an \"rpmbuild\" directory in the path you specify and a set of system subdirectories below that."
 
 if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     echo $usage
@@ -18,11 +18,23 @@ fi
 if [ $# -eq 1 ]; then
     baseDir=$1
 else
-    echo "Build directory tree in the current directory? (y/n)[n] "
+    baseDir=$PWD
+fi
+
+if [[ "$baseDir" =~ .*rpmbuild.* ]]; then
+    echo "An rpmbuild directory already exists here:"
+    rpmbuildPath="${baseDir%rpmbuild*}rpmbuild"
+    echo "$rpmbuildPath"
+    echo
+    echo "Would you like to have the directory tree under this existing directory? (y/n) [n]"
     read userInput
     if [ "$userInput" == "y" ] || [ "$userInput" == "Y" ]; then
-        baseDir=$PWD
-    else
+        baseDir=${baseDir%rpmbuild*}
+    fi
+else
+    echo "Build directory tree in the current directory? (y/n)[n] "
+    read userInput
+    if [ "$userInput" != "y" ] && [ "$userInput" != "Y" ]; then
         echo "Exiting..."
         echo
         echo $usage
@@ -37,19 +49,7 @@ if [ ! -d $baseDir ]; then
         echo "It looks like the directory $baseDir could not be created. Exiting..."
         exit 1
     fi
-elif [[ "$baseDir" =~ .*rpmbuild.* ]]; then
-    echo "An rpmbuild directory already exists here:"
-    rpmbuildPath="${baseDir%rpmbuild*}rpmbuild"
-    echo "$rpmbuildPath"
-    echo
-    echo "Would you like to have the directory tree under this existing directory? (y/n) [n]"
-    read userInput
-    if [ "$userInput" == "y" ] || [ "$userInput" == "Y" ]; then
-        baseDir=${baseDir%rpmbuild*}
-    fi
-    echo "Creating rpmbuild heirarchy in the ${baseDir} directory."
 fi
-
 
 # if ! [[ "$scriptPath" =~ .*rpmbuild.* ]]; then
 #     echo "The script is running from the path $scriptPath"
@@ -65,6 +65,7 @@ if [ ! -d "${baseDir}/rpmbuild" ]; then
 fi
 baseDir=${baseDir}/rpmbuild
 
+echo "Creating rpmbuild heirarchy in the ${baseDir} directory."
 for systemName in hikari ls5 ls4 stampede maverick wrangler; do
     if [ ! -d $baseDir/$systemName ]; then
         echo "creating $systemName directory"

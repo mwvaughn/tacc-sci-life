@@ -1,16 +1,14 @@
-
-
-Name: bowtie
-Version: 2.2.5
-Release: 3
-License: GPL
-Source:  http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.5/bowtie2-2.2.5-source.zip
-Packager: TACC - jfonner@tacc.utexas.edu
-Summary: Memory-efficient short read (NGS) aligner
-
 #------------------------------------------------
 # INITIAL DEFINITIONS
 #------------------------------------------------
+%define PNAME bowtie
+Version:      2.2.5
+Release:      3
+License:      GPL
+Source:       http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.5/bowtie2-2.2.5-source.zip
+Packager:     TACC - jfonner@tacc.utexas.edu
+Summary:      Memory-efficient short read (NGS) aligner
+Group: Applications/Life Sciences
 
 ## System Definitions
 %include ./include/system-defines.inc
@@ -22,12 +20,14 @@ Summary: Memory-efficient short read (NGS) aligner
 ## directory and name definitions for relocatable RPMs
 %include ./include/name-defines.inc
 
+Name: %{pkg_name} 
+
+
 %define MODULE_VAR  %{MODULE_VAR_PREFIX}BOWTIE
-%define PNAME       bowtie
+
 
 %package %{PACKAGE}
 Summary: Memory-efficient short read (NGS) aligner
-Group: Applications/Life Sciences
 %description package
 
 %package %{MODULEFILE}
