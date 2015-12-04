@@ -25,6 +25,7 @@
     %define INSTALL_SUFFIX %{PNAME}/%{version}
 %endif
 
+Name: %{pkg_name}
 %define MODULE_DIR      %{APPS}/%{MODULE_SUFFIX}
 %define INSTALL_DIR     %{APPS}/%{INSTALL_SUFFIX}
 

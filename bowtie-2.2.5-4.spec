@@ -3,12 +3,14 @@
 #------------------------------------------------
 %define PNAME bowtie
 Version:      2.2.5
-Release:      3
+Release:      4
 License:      GPL
+Group:        Applications/Life Sciences
 Source:       http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.5/bowtie2-2.2.5-source.zip
 Packager:     TACC - jfonner@tacc.utexas.edu
 Summary:      Memory-efficient short read (NGS) aligner
-Group: Applications/Life Sciences
+Prefix:       /opt/apps
+
 
 ## System Definitions
 %include ./include/system-defines.inc
@@ -20,20 +22,7 @@ Group: Applications/Life Sciences
 ## directory and name definitions for relocatable RPMs
 %include ./include/name-defines.inc
 
-Name: %{pkg_name} 
-
-
 %define MODULE_VAR  %{MODULE_VAR_PREFIX}BOWTIE
-
-
-%package %{PACKAGE}
-Summary: Memory-efficient short read (NGS) aligner
-%description package
-
-%package %{MODULEFILE}
-Summary: Memory-efficient short read (NGS) aligner
-Group: Applications/Life Sciences
-%description modulefile
 
 ## PACKAGE DESCRIPTION
 %description
@@ -42,13 +31,8 @@ Bowtie 2 is an ultrafast and memory-efficient tool for aligning sequencing reads
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
 %prep
-%if %{?BUILD_PACKAGE}
-    rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-%endif
-
-%if %{?BUILD_MODULEFILE}
-    rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
-%endif
+rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 ## SETUP
 %setup -n %{PNAME}2-%{version}
@@ -74,7 +58,7 @@ make EXTRA_FLAGS="-Wl,-rpath,$GCC_LIB"
 ## Install Steps End
 #--------------------------------------
 
-    cp -R ./bowtie2* ./doc ./scripts $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp -R ./bowtie2* ./doc ./scripts $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 # MODULEFILE CREATION
