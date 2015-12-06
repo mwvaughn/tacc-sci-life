@@ -114,9 +114,6 @@ cat > $RPM_BUILD_ROOT%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
 
-%endif
-#--------------------------------------
-
 #------------------------------------------------
 # FILES SECTION
 #------------------------------------------------
