@@ -1,9 +1,10 @@
-Name: bedtools
+%define PNAME 		bedtools
 Version: 2.25.0
 Release: 1
 License: GPL
 Source: https://github.com/arq5x/bedtools2/releases/download/v2.25.0/bedtools2-2.25.0.tar.gz
 Packager: TACC - gzynda@tacc.utexas.edu
+Group: Applications/Life Sciences
 Summary: A flexible suite of utilities for comparing genomic features
 
 #------------------------------------------------
@@ -20,33 +21,18 @@ Summary: A flexible suite of utilities for comparing genomic features
 ## directory and name definitions for relocatable RPMs
 %include ./include/name-defines.inc
 
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}BEDTOOLS
-%define PNAME       bedtools
-
-%package %{PACKAGE}
-Summary: A flexible suite of utilities for comparing genomic features
-Group: Applications/Life Sciences
-%description package
-
-%package %{MODULEFILE}
-Summary: A flexible suite of utilities for comparing genomic features
-Group: Applications/Life Sciences
-%description modulefile
+%define MODULE_VAR	%{MODULE_VAR_PREFIX}BEDTOOLS
 
 ## PACKAGE DESCRIPTION
 %description
+#%description -n %{PNAME}2-%{version}
 The bedtools utilities are a swiss-army knife of tools for a wide-range of genomics analysis tasks. The most widely-used tools enable genome arithmetic: that is, set theory on the genome. For example, bedtools allows one to intersect, merge, count, complement, and shuffle genomic intervals from multiple files in widely-used genomic file formats such as BAM, BED, GFF/GTF, VCF.
 
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
 %prep
-%if %{?BUILD_PACKAGE}
-    rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-%endif
-
-%if %{?BUILD_MODULEFILE}
-    rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
-%endif
+rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 ## SETUP
 %setup -n %{PNAME}2-%{version}
@@ -61,18 +47,7 @@ The bedtools utilities are a swiss-army knife of tools for a wide-range of genom
 
 # Start with a clean environment
 %include ./include/%{PLATFORM}/system-load.inc
-
-#--------------------------------------
-%if %{?BUILD_PACKAGE}
-    mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-    ##### Create TACC Canary Files ########
-    touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
-    ########### Do Not Remove #############
-
-#--------------------------------------
-## Install Steps Start
-module purge
-module load TACC
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 ## Patch Makefile
 patch Makefile -li - <<EOF
@@ -83,36 +58,33 @@ patch Makefile -li - <<EOF
 EOF
 
 ## Make
-make -j 16
+make -j 4
 
 ## Install Steps End
 #--------------------------------------
-cp -R bin docs scripts tutorial README.md RELEASE_HISTORY LICENSE $RPM_BUILD_ROOT/%{INSTALL_DIR}
-%endif
-#--------------------------------------
+cp -R bin scripts tutorial README.md RELEASE_HISTORY LICENSE $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cd docs
+module load python
+make man
+chmod +x _build/man/*
+cp -R _build/man $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-#------------------------------------------------
-# MODULEFILE CREATION
-#------------------------------------------------
-%if %{?BUILD_MODULEFILE}
-    mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-    ##### Create TACC Canary Files ########
-    touch $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
-    ########### Do Not Remove #############
 
 #--------------------------------------
+
+mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+
 ## Modulefile Start
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-The %{PNAME} module file defines the following environment variables:
-%{MODULE_VAR}_DIR and %{MODULE_VAR}_SCRIPTS for the location of the %{name}
-distribution. Documentation can be found online at http://bedtools.readthedocs.org/en/latest/
+The %{PNAME} module file defines the following environment variables: %{MODULE_VAR}_DIR and %{MODULE_VAR}_SCRIPTS for the location of the %{PNAME} distribution. Documentation can be found online at http://bedtools.readthedocs.org/en/latest/
+
+help: man bedtools
 
 bedtools + scripts
 
 Version %{version}
-
 ]])
 
 whatis("Name: Bedtools")
@@ -122,13 +94,11 @@ whatis("Keywords: Biology, Genomics, Utility, Interval, Sequencing")
 whatis("Description: bedtools: a flexible suite of utilities for comparing genomic features")
 whatis("URL: https://github.com/arq5x/bedtools2")
 
-setenv("%{MODULE_VAR}_DIR",	%{INSTALL_DIR})
-setenv("%{MODULE_VAR}_SCRIPTS",	pathJoin(%{INSTALL_DIR},"scripts"))
+setenv("%{MODULE_VAR}_DIR",	"%{INSTALL_DIR}")
+setenv("%{MODULE_VAR}_SCRIPTS",	pathJoin("%{INSTALL_DIR}","scripts"))
 
-prepend_path("PATH",		pathJoin(%{INSTALL_DIR},"bin"))
-
-#prereq("perl")
-
+prepend_path("PATH",		pathJoin("%{INSTALL_DIR}","bin"))
+prepend_path("MANPATH",		pathJoin("%{INSTALL_DIR}","man"))
 EOF
 ## Modulefile End
 #--------------------------------------
@@ -142,37 +112,23 @@ fi
 cat > $RPM_BUILD_ROOT%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{name}-%{version}
+## version file for %{PNAME}-%{version}
 ##
 
 set     ModulesVersion      "%{version}"
 EOF
-
-%endif
 #--------------------------------------
 
 #------------------------------------------------
 # FILES SECTION
 #------------------------------------------------
-%if %{?BUILD_PACKAGE}
-%files %{PACKAGE}
+%files
 %defattr(-,root,install,)
 %{INSTALL_DIR}
-%endif # ?BUILD_PACKAGE
-
-%if %{?BUILD_MODULEFILE}
-%files %{MODULEFILE}
-%defattr(-,root,install,)
 %{MODULE_DIR}
-%endif # ?BUILD_MODULEFILE
 
 ## POST 
-%post %{PACKAGE}
-export PACKAGE_POST=1
-%include include/post-defines.inc
-%post %{MODULEFILE}
-export MODULEFILE_POST=1
-%include include/post-defines.inc
+%post
 
 ## CLEAN UP
 %clean
@@ -181,4 +137,3 @@ cd /tmp
 
 # Remove the installation files now that the RPM has been generated
 rm -rf $RPM_BUILD_ROOT
-
