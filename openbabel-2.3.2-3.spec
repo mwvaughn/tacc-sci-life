@@ -55,7 +55,13 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ## Install Steps Start
 module purge
 module load TACC
-module swap $TACC_FAMILY_COMPILER gcc
+
+%if "%{PLATFORM}" == "ls5"
+    module swap $TACC_FAMILY_COMPILER gcc/4.9.3   # need to test this still, also gcc/5.2.0 is available
+    module load cmake/3.3.2
+    export CC=`which gcc`
+    export CXX=`which g++`
+%endif
 
 %if "%{PLATFORM}" == "stampede"
     module swap $TACC_FAMILY_COMPILER gcc/4.4.6   # newer versions of gcc cause test failures
