@@ -62,12 +62,13 @@ make -j 4
 
 ## Install Steps End
 #--------------------------------------
-cp -R bin scripts tutorial README.md RELEASE_HISTORY LICENSE $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp -R bin scripts README.md RELEASE_HISTORY LICENSE $RPM_BUILD_ROOT/%{INSTALL_DIR}
 cd docs
 module load python
 make man
 chmod +x _build/man/*
-cp -R _build/man $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/man/man1
+cp _build/man/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/man/man1
 
 
 #--------------------------------------
@@ -78,9 +79,11 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-The %{PNAME} module file defines the following environment variables: %{MODULE_VAR}_DIR and %{MODULE_VAR}_SCRIPTS for the location of the %{PNAME} distribution. Documentation can be found online at http://bedtools.readthedocs.org/en/latest/
+The %{PNAME} module file defines the following environment variables: %{MODULE_VAR}_DIR and %{MODULE_VAR}_SCRIPTS for the location of the %{PNAME} distribution.
 
-help: man bedtools
+Documentation: http://bedtools.readthedocs.org/en/latest
+Tutorial: http://quinlanlab.org/tutorials/cshl2013/bedtools.html
+Help: man bedtools
 
 bedtools + scripts
 
