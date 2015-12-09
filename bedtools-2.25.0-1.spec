@@ -48,6 +48,13 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 # Start with a clean environment
 %include ./include/%{PLATFORM}/system-load.inc
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+	
+if [ "%{PLATFORM}" != "ls5" ]
+then
+	module purge
+	module load TACC
+fi
+module load python/2.7.9
 
 ## Patch Makefile
 patch Makefile -li - <<EOF
@@ -58,13 +65,12 @@ patch Makefile -li - <<EOF
 EOF
 
 ## Make
-make -j 4
+make -j 8
 
 ## Install Steps End
 #--------------------------------------
 cp -R bin scripts README.md RELEASE_HISTORY LICENSE $RPM_BUILD_ROOT/%{INSTALL_DIR}
 cd docs
-module load python
 make man
 chmod +x _build/man/*
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/man/man1
