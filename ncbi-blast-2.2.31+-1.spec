@@ -10,7 +10,6 @@ License: GPL
 Group: Applications/Life Sciences
 Source: ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/ncbi-blast-%{version}+-x64-linux.tar.gz
 Packager: vaughn@tacc.utexas.edu
-Prefix: /opt/apps
 
 ## System Definitions
 %include ./include/system-defines.inc

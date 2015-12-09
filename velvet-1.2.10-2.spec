@@ -10,7 +10,6 @@ License: GPLv2
 Group: Applications/Life Sciences
 Source:  https://www.ebi.ac.uk/~zerbino/velvet/velvet_%{version}.tgz
 Packager: TACC - vaughn@tacc.utexas.edu
-Prefix: /opt/apps
 
 ## System Definitions
 %include ./include/system-defines.inc

@@ -10,7 +10,7 @@ Vendor:     Heng Li at the Sanger Institute
 Group: Applications/Life Sciences
 Source:     http://sourceforge.net/projects/bio-bwa/files/bwa-%{version}.tar.bz2
 Packager:   TACC - vaughn@tacc.utexas.edu
-Prefix: /opt/apps
+#Prefix: /opt/apps
 
 ## System Definitions
 %include ./include/system-defines.inc
