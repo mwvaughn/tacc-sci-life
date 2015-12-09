@@ -9,7 +9,6 @@ Group:        Applications/Life Sciences
 Source:       http://downloads.sourceforge.net/project/bowtie-bio/bowtie2/2.2.5/bowtie2-2.2.5-source.zip
 Packager:     TACC - jfonner@tacc.utexas.edu
 Summary:      Memory-efficient short read (NGS) aligner
-Prefix:       /opt/apps
 
 
 ## System Definitions
@@ -89,9 +88,9 @@ whatis("Keywords: Biology, Genomics, Alignment, Sequencing")
 whatis("URL: http://bowtie-bio.sourceforge.net/bowtie2/")
 whatis("Description: Ultrafast, memory-efficient short read aligner")
 
-setenv("%{MODULE_VAR}_DIR",              %{INSTALL_DIR})
-setenv("%{MODULE_VAR}_SCRIPTS", pathJoin(%{INSTALL_DIR},"scripts"))
-prepend_path("PATH",                     %{INSTALL_DIR})
+setenv("%{MODULE_VAR}_DIR",              "%{INSTALL_DIR}")
+setenv("%{MODULE_VAR}_SCRIPTS", pathJoin("%{INSTALL_DIR}","scripts"))
+prepend_path("PATH",                     "%{INSTALL_DIR}")
 
 prereq("perl")
 
