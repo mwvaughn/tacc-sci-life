@@ -1,6 +1,6 @@
 %define	PNAME	cd-hit
 Version: 4.6.4
-Release: 1
+Release: 2
 License: GPL
 Group: Applications/Life Sciences
 Source:  https://github.com/weizhongli/cdhit/releases/download/V4.6.4/cd-hit-4.6.4.tar.gz
@@ -20,7 +20,7 @@ Summary: Clustering DNA/protein sequence database at high identity with toleranc
 ## directory and name definitions for relocatable RPMs
 %include ./include/name-defines.inc
 
-%define MODULE_VAR	%{MODULE_VAR_PREFIX}CD-HIT
+%define MODULE_VAR	%{MODULE_VAR_PREFIX}CDHIT
 
 ## PACKAGE DESCRIPTION
 %description
@@ -54,7 +54,7 @@ then
 fi
 
 ## Make
-make CC=icc openmp=yes LDFLAGS="-Wl,-rpath=$ICC_LIB -o" PREFIX=$RPM_BUILD_ROOT/%{INSTALL_DIR}
+make CC=icpc openmp=yes LDFLAGS="-Wl,-rpath=$ICC_LIB -o" PREFIX=$RPM_BUILD_ROOT/%{INSTALL_DIR} CCFLAGS="-O3 -xAVX -axCORE-AVX2 -fopenmp"
 
 ## Install Steps End
 #--------------------------------------
@@ -73,7 +73,7 @@ Version %{version}
 
 ]])
 
-whatis("Name: CD-HIT")
+whatis("Name: CDHIT")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
 whatis("Keywords: Biology, Genomics, Proteomics, Clustering")
