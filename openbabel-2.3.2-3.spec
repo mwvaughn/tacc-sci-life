@@ -1,15 +1,14 @@
 #------------------------------------------------
 # INITIAL DEFINITIONS
 #------------------------------------------------
-%define PNAME openbabel
+%define   PNAME openbabel
 Version:  2.3.2
 Release:  3
 License:  GNU General Public License
 Group:    Applications/Life Sciences
-Source:   openbabel-2.3.2.tar.gz
+Source:   http://sourceforge.net/projects/openbabel/files/openbabel/2.3.2/openbabel-2.3.2.tar.gz
 Packager: TACC - wallen@tacc.utexas.edu
 Summary:  Chemical toolbox designed to speak the many languages of chemical data
-Prefix:   /opt/apps
 
 ## System Definitions
 %include ./include/system-defines.inc
