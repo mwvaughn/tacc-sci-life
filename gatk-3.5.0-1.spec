@@ -71,6 +71,7 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
+
 This module loads %{PNAME} version %{version}
 Documentation for %{PNAME} is available online at: https://www.broadinstitute.org/gatk/download/
 
