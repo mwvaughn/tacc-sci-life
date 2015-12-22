@@ -3,7 +3,7 @@
 #------------------------------------------------
 %define   PNAME openbabel
 Version:  2.3.2
-Release:  3
+Release:  2
 License:  GNU General Public License
 Group:    Applications/Life Sciences
 Source:   http://sourceforge.net/projects/openbabel/files/openbabel/2.3.2/openbabel-2.3.2.tar.gz
@@ -197,9 +197,10 @@ rm -rf $RPM_BUILD_ROOT
 
 
 # In SPECS dir:
-# ./build_rpm.sh --gcc=49 openbabel-2.3.2-3.spec
+# ./build_rpm.sh --gcc=49 openbabel-2.3.2-2.spec
 #
 # In apps dir: 
 # export RPM_DBPATH=$PWD/db/
 # rpm --dbpath $PWD/db --relocate /opt/apps=$PWD -Uvh --force --nodeps /path/to/rpm/file/rpm_file.rpm
+# ./scripts/myRpmInstall $WORK/$PLATFORM/apps/ /path/to/rpm_file.rpm
 
