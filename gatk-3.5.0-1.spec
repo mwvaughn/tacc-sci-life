@@ -9,6 +9,7 @@ Group:    Applications/Life Sciences
 Source:   GenomeAnalysisTK-3.5.tar.bz2
 Packager: TACC - wallen@tacc.utexas.edu
 Summary:  GATK - Genome Analysis Toolkit
+Prefix: /opt/apps
 
 ## System Definitions
 %include ./include/system-defines.inc
@@ -142,4 +143,5 @@ rm -rf $RPM_BUILD_ROOT
 # In apps dir: 
 # export RPM_DBPATH=$PWD/db/
 # rpm --dbpath $PWD/db --relocate /opt/apps=$PWD -Uvh --force --nodeps /path/to/rpm/file/rpm_file.rpm
+# ./scripts/myRpmInstall $WORK/$PLATFORM/apps/ /path/to/rpm_file.rpm
 
