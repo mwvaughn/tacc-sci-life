@@ -1,15 +1,14 @@
 #------------------------------------------------
 # INITIAL DEFINITIONS
 #------------------------------------------------
-%define PNAME bwa
-Summary:    Burrows-Wheeler Alignment Tool
-Version:    0.7.12
-Release:    3
-License:    GPLv3
-Vendor:     Heng Li at the Sanger Institute
-Group: Applications/Life Sciences
-Source:     http://sourceforge.net/projects/bio-bwa/files/bwa-%{version}.tar.bz2
-Packager:   TACC - vaughn@tacc.utexas.edu
+%define PNAME curl
+Version:      7.46.0
+Release:      1
+License:      GPL
+Group:        Applications/Life Sciences
+Source:       http://curl.haxx.se/download/curl-7.46.0.tar.gz
+Packager:     TACC - vaughn@tacc.utexas.edu
+Summary:      curl is an open source command line tool and library for transferring data with URL syntax.
 
 ## System Definitions
 %include ./include/system-defines.inc
@@ -21,11 +20,11 @@ Packager:   TACC - vaughn@tacc.utexas.edu
 ## directory and name definitions for relocatable RPMs
 %include ./include/name-defines.inc
 
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}BWA
+%define MODULE_VAR  %{MODULE_VAR_PREFIX}CURL
 
 ## PACKAGE DESCRIPTION
 %description
-BWA is a software package for mapping low-divergent sequences against a large reference genome, such as the human genome. It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM. The first algorithm is designed for Illumina sequence reads up to 100bp, while the rest two for longer sequences ranged from 70bp to 1Mbp. BWA-MEM and BWA-SW share similar features such as long-read support and split alignment, but BWA-MEM, which is the latest, is generally recommended for high-quality queries as it is faster and more accurate. BWA-MEM also has better performance than BWA-backtrack for 70-100bp Illumina reads.
+curl is an open source command line tool and library for transferring data with URL syntax, supporting DICT, FILE, FTP, FTPS, Gopher, HTTP, HTTPS, IMAP, IMAPS, LDAP, LDAPS, POP3, POP3S, RTMP, RTSP, SCP, SFTP, SMB, SMTP, SMTPS, Telnet and TFTP. curl supports SSL certificates, HTTP POST, HTTP PUT, FTP uploading, HTTP form based upload, proxies, HTTP/2, cookies, user+password authentication (Basic, Plain, Digest, CRAM-MD5, NTLM, Negotiate and Kerberos), file transfer resume, proxy tunneling and more.
 
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
@@ -48,44 +47,49 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 %include ./include/%{PLATFORM}/system-load.inc
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-#------------------------------------------------
+#--------------------------------------
 ## Install Steps Start
-
 module swap $TACC_FAMILY_COMPILER gcc
+
+configure --prefix=%{INSTALL_DIR}
 make
 
 ## Install Steps End
-#------------------------------------------------
+#--------------------------------------
 
-cp ./bwa *.pl $RPM_BUILD_ROOT/%{INSTALL_DIR}
+make DESTDIR=$RPM_BUILD_ROOT install
 
 #------------------------------------------------
 # MODULEFILE CREATION
 #------------------------------------------------
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
-#------------------------------------------------
+#--------------------------------------
 ## Modulefile Start
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-Documentation can be found online at http://bio-bwa.sourceforge.net/bwa.shtml
-The bwa executable can be found in %{MODULE_VAR}_DIR
+The %{PNAME} module file defines the following environment variables:
+%{MODULE_VAR}_DIR and %{MODULE_VAR}_LIB for the location of the %{name}
+distribution. Documentation can be found online at http://curl.haxx.se/docs/manpage.html
 
 Version %{version}
+
 ]])
 
-whatis("Name: bwa")
+whatis("Name: curl")
 whatis("Version: %{version}")
-whatis("Category: computational biology, genomics")
-whatis("Keywords:  Biology, Genomics, Alignment, Sequencing")
-whatis("Description: Burrows-Wheeler Alignment Tool")
-whatis("URL: http://bio-bwa.sourceforge.net/")
+whatis("Category: Utilities")
+whatis("Keywords: Networking, Scripting, Utilities")
+whatis("URL: http://curl.haxx.se/")
+whatis("Description: Tool to transfer data from or to a server.")
 
-setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-prepend_path("PATH"       ,"%{INSTALL_DIR}")
+prepend_path("PATH",              "%{INSTALL_DIR}/bin")
+setenv (     "%{MODULE_VAR}_DIR", "%{INSTALL_DIR}")
+setenv (     "%{MODULE_VAR}_BIN", "%{INSTALL_DIR}/bin")
 
 EOF
+
 ## Modulefile End
 #------------------------------------------------
 

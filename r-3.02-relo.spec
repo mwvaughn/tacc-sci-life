@@ -1,15 +1,20 @@
 #------------------------------------------------
 # INITIAL DEFINITIONS
 #------------------------------------------------
-%define PNAME bwa
-Summary:    Burrows-Wheeler Alignment Tool
-Version:    0.7.12
-Release:    3
-License:    GPLv3
-Vendor:     Heng Li at the Sanger Institute
-Group: Applications/Life Sciences
-Source:     http://sourceforge.net/projects/bio-bwa/files/bwa-%{version}.tar.bz2
+
+%define PNAME Rstats
+Summary:    R is a free software environment for statistical computing and graphics.
+Version:    3.0.2
+Release:    1
+License:    GPLv2
+Vendor:     R Foundation for Statistical Computing
+Group:      Applications/Statistics
+Source:     https://cran.r-project.org/src/base/R-3/R-3.0.2.tar.gz
 Packager:   TACC - vaughn@tacc.utexas.edu
+
+#------------------------------------------------
+# BASIC DEFINITIONS
+#------------------------------------------------
 
 ## System Definitions
 %include ./include/system-defines.inc
@@ -21,11 +26,14 @@ Packager:   TACC - vaughn@tacc.utexas.edu
 ## directory and name definitions for relocatable RPMs
 %include ./include/name-defines.inc
 
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}BWA
+%define MODULE_VAR  %{MODULE_VAR_PREFIX}R
 
 ## PACKAGE DESCRIPTION
 %description
-BWA is a software package for mapping low-divergent sequences against a large reference genome, such as the human genome. It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM. The first algorithm is designed for Illumina sequence reads up to 100bp, while the rest two for longer sequences ranged from 70bp to 1Mbp. BWA-MEM and BWA-SW share similar features such as long-read support and split alignment, but BWA-MEM, which is the latest, is generally recommended for high-quality queries as it is faster and more accurate. BWA-MEM also has better performance than BWA-backtrack for 70-100bp Illumina reads.
+R provides a wide variety of statistical (linear and nonlinear
+modelling, classical statistical tests, time-series analysis,
+classification, clustering, etc.) and graphical techniques, and
+is highly extensible.
 
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
@@ -34,7 +42,7 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 ## SETUP
-%setup -n %{PNAME}-%{version}
+%setup -n R-%{version}
 
 ## BUILD
 %build
@@ -52,12 +60,18 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ## Install Steps Start
 
 module swap $TACC_FAMILY_COMPILER gcc
+
+./configure --prefix=%{INSTALL_DIR} \
+  --enable-R-shlib --enable-shared \
+  --with-blas --with-lapack --with-pic \
+  --without-readline
+
+mkdir -p $PWD/tmpinstall
+
 make
+make install
 
 ## Install Steps End
-#------------------------------------------------
-
-cp ./bwa *.pl $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 # MODULEFILE CREATION
@@ -67,25 +81,43 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 #------------------------------------------------
 ## Modulefile Start
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help (
+help(
 [[
-Documentation can be found online at http://bio-bwa.sourceforge.net/bwa.shtml
-The bwa executable can be found in %{MODULE_VAR}_DIR
+This is the R statistics (Rstats) package built on %(date +'%B %d, %Y').
+The R modulefile defines the environment variables TACC_R_DIR, TACC_R_BIN,
+TACC_R_LIB and extends the PATH and LD_LIBRARY_PATH paths as appropriate.
 
 Version %{version}
-]])
+]]
+)
 
-whatis("Name: bwa")
+whatis("Name: R")
 whatis("Version: %{version}")
-whatis("Category: computational biology, genomics")
-whatis("Keywords:  Biology, Genomics, Alignment, Sequencing")
-whatis("Description: Burrows-Wheeler Alignment Tool")
-whatis("URL: http://bio-bwa.sourceforge.net/")
+whatis("Category: Applications, Statistics, Graphics")
+whatis("Keywords: Applications, Statistics, Graphics, Scripting Language")
+whatis("URL: http://www.r-project.org/")
+whatis("Description: statistics package")
 
-setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-prepend_path("PATH"       ,"%{INSTALL_DIR}")
+--
+-- Create environment variables.
+--
+local r_dir   = "%{INSTALL_DIR}"
+local r_bin   = "%{INSTALL_DIR}/bin"
+local r_inc   = "%{INSTALL_DIR}/include"
+local r_lib   = "%{INSTALL_DIR}/lib64"
+local r_man   = "%{INSTALL_DIR}/share/man"
 
+setenv("TACC_R_DIR", r_dir)
+setenv("TACC_R_BIN", r_bin)
+setenv("TACC_R_INC", r_inc)
+setenv("TACC_R_LIB", r_lib)
+setenv("TACC_R_MAN", r_man)
+
+append_path("PATH", r_bin)
+append_path("MANPATH", r_man)
+append_path("LD_LIBRARY_PATH", r_lib)
 EOF
+
 ## Modulefile End
 #------------------------------------------------
 

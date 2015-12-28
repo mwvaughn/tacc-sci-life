@@ -1,15 +1,16 @@
 #------------------------------------------------
 # INITIAL DEFINITIONS
 #------------------------------------------------
-%define PNAME bwa
-Summary:    Burrows-Wheeler Alignment Tool
-Version:    0.7.12
-Release:    3
-License:    GPLv3
-Vendor:     Heng Li at the Sanger Institute
+%define PNAME samtools
+Summary: Samtools - utilities for manipulating alignments in the SAM format.
+Version: 0.1.19
+Release: 2
+License: GPL
 Group: Applications/Life Sciences
-Source:     http://sourceforge.net/projects/bio-bwa/files/bwa-%{version}.tar.bz2
-Packager:   TACC - vaughn@tacc.utexas.edu
+Source:  http://sourceforge.net/projects/samtools/files/samtools/%{version}/samtools-%{version}.tar.bz2
+Packager: TACC - vaughn@tacc.utexas.edu
+
+AutoReqProv: no
 
 ## System Definitions
 %include ./include/system-defines.inc
@@ -21,11 +22,11 @@ Packager:   TACC - vaughn@tacc.utexas.edu
 ## directory and name definitions for relocatable RPMs
 %include ./include/name-defines.inc
 
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}BWA
+%define MODULE_VAR  %{MODULE_VAR_PREFIX}SAMTOOLS
 
 ## PACKAGE DESCRIPTION
 %description
-BWA is a software package for mapping low-divergent sequences against a large reference genome, such as the human genome. It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM. The first algorithm is designed for Illumina sequence reads up to 100bp, while the rest two for longer sequences ranged from 70bp to 1Mbp. BWA-MEM and BWA-SW share similar features such as long-read support and split alignment, but BWA-MEM, which is the latest, is generally recommended for high-quality queries as it is faster and more accurate. BWA-MEM also has better performance than BWA-backtrack for 70-100bp Illumina reads.
+SamTools provides various utilities for manipulating alignments in the SAM format, including sorting, merging, indexing and generating alignments in a per-position format.
 
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
@@ -46,7 +47,10 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 # Start with a clean environment
 %include ./include/%{PLATFORM}/system-load.inc
+
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
 
 #------------------------------------------------
 ## Install Steps Start
@@ -54,10 +58,12 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 module swap $TACC_FAMILY_COMPILER gcc
 make
 
+cp -R ./samtools ./bcftools ./misc ./examples $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp -R ./libbam.a $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
+cp -R *.h $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
+
 ## Install Steps End
 #------------------------------------------------
-
-cp ./bwa *.pl $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 # MODULEFILE CREATION
@@ -67,25 +73,33 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 #------------------------------------------------
 ## Modulefile Start
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help (
+help(
 [[
-Documentation can be found online at http://bio-bwa.sourceforge.net/bwa.shtml
-The bwa executable can be found in %{MODULE_VAR}_DIR
+The %{name} module file defines the following environment variables:
+%{MODULE_VAR}_DIR, %{MODULE_VAR}_INC, and %{MODULE_VAR}_LIB
+associated with %{name}
 
 Version %{version}
-]])
+]]
+)
 
-whatis("Name: bwa")
+whatis("Name: SamTools")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
-whatis("Keywords:  Biology, Genomics, Alignment, Sequencing")
-whatis("Description: Burrows-Wheeler Alignment Tool")
-whatis("URL: http://bio-bwa.sourceforge.net/")
+whatis("Keywords: Biology, Genomics, Quality Control, Utility, Sequencing, Genotyping, Resequencing, SNP")
+whatis("URL: http://samtools.sourceforge.net/")
+whatis("Description: SAM Tools provide various utilities for manipulating alignments in the SAM format, including sorting, merging, indexing and generating alignments in a per-position format.")
 
-setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-prepend_path("PATH"       ,"%{INSTALL_DIR}")
+prepend_path("PATH",              "%{INSTALL_DIR}")
+prepend_path("PATH",              "%{INSTALL_DIR}/bcftools")
+prepend_path("PATH",              "%{INSTALL_DIR}/misc")
+
+setenv (     "%{MODULE_VAR}_DIR", "%{INSTALL_DIR}/")
+setenv (     "%{MODULE_VAR}_INC", "%{INSTALL_DIR}/include")
+setenv (     "%{MODULE_VAR}_LIB", "%{INSTALL_DIR}/lib")
 
 EOF
+
 ## Modulefile End
 #------------------------------------------------
 

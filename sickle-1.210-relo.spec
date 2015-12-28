@@ -1,15 +1,17 @@
+
+# curl -skL -o "sickle-1.2.zip" "https://github.com/najoshi/sickle/archive/v1.2.zip"
+
 #------------------------------------------------
 # INITIAL DEFINITIONS
 #------------------------------------------------
-%define PNAME bwa
-Summary:    Burrows-Wheeler Alignment Tool
-Version:    0.7.12
-Release:    3
-License:    GPLv3
-Vendor:     Heng Li at the Sanger Institute
+%define PNAME sickle
+Summary: A windowed adaptive trimming tool for FASTQ files using quality
+Version: 1.2
+Release: 2
+License: Artistic
 Group: Applications/Life Sciences
-Source:     http://sourceforge.net/projects/bio-bwa/files/bwa-%{version}.tar.bz2
-Packager:   TACC - vaughn@tacc.utexas.edu
+Source:  sickle-1.2.zip
+Packager: TACC - vaughn@tacc.utexas.edu
 
 ## System Definitions
 %include ./include/system-defines.inc
@@ -21,11 +23,13 @@ Packager:   TACC - vaughn@tacc.utexas.edu
 ## directory and name definitions for relocatable RPMs
 %include ./include/name-defines.inc
 
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}BWA
+%define MODULE_VAR  %{MODULE_VAR_PREFIX}SICKLE
 
-## PACKAGE DESCRIPTION
+#------------------------------------------------
+# PACKAGE DESCRIPTION
+#------------------------------------------------
 %description
-BWA is a software package for mapping low-divergent sequences against a large reference genome, such as the human genome. It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM. The first algorithm is designed for Illumina sequence reads up to 100bp, while the rest two for longer sequences ranged from 70bp to 1Mbp. BWA-MEM and BWA-SW share similar features such as long-read support and split alignment, but BWA-MEM, which is the latest, is generally recommended for high-quality queries as it is faster and more accurate. BWA-MEM also has better performance than BWA-backtrack for 70-100bp Illumina reads.
+Sickle is a tool that uses sliding windows along with quality and length thresholds to determine when quality is sufficiently low to trim the 3'-end of reads and also determines when the quality is sufficiently high enough to trim the 5'-end of reads. It will also discard reads based upon the length threshold.
 
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
@@ -53,11 +57,10 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 module swap $TACC_FAMILY_COMPILER gcc
 make
+cp -R ./sickle ./sickle.xml $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 ## Install Steps End
 #------------------------------------------------
-
-cp ./bwa *.pl $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 # MODULEFILE CREATION
@@ -69,23 +72,25 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-Documentation can be found online at http://bio-bwa.sourceforge.net/bwa.shtml
-The bwa executable can be found in %{MODULE_VAR}_DIR
+The %{PNAME} module file defines the following environment variables:
+%{MODULE_VAR}_DIR for the location of the %{PNAME}
+distribution. Documentation can be found online at http://bowtie-bio.sourceforge.net/
 
 Version %{version}
 ]])
 
-whatis("Name: bwa")
+whatis("Name: Sickle")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
-whatis("Keywords:  Biology, Genomics, Alignment, Sequencing")
-whatis("Description: Burrows-Wheeler Alignment Tool")
-whatis("URL: http://bio-bwa.sourceforge.net/")
+whatis("Keywords: Biology, Genomics, Quality Control, Utility, Sequencing")
+whatis("URL: https://github.com/ucdavis-bioinformatics/sickle")
+whatis("Description: A windowed adaptive trimming tool for FASTQ files using quality")
 
-setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-prepend_path("PATH"       ,"%{INSTALL_DIR}")
+setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}/")
+prepend_path("PATH"       ,"%{INSTALL_DIR}/")
 
 EOF
+
 ## Modulefile End
 #------------------------------------------------
 

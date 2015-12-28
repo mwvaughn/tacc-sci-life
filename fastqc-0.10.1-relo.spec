@@ -1,14 +1,13 @@
 #------------------------------------------------
 # INITIAL DEFINITIONS
 #------------------------------------------------
-%define PNAME bwa
-Summary:    Burrows-Wheeler Alignment Tool
-Version:    0.7.12
-Release:    3
-License:    GPLv3
-Vendor:     Heng Li at the Sanger Institute
-Group: Applications/Life Sciences
-Source:     http://sourceforge.net/projects/bio-bwa/files/bwa-%{version}.tar.bz2
+%define PNAME fastqc
+Summary: FastQC - A quality control application for high throughput sequence data
+Version:  0.10.1
+Release:   3
+Group:	Applications/Life Sceinces
+License:  GPL
+Source:  http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.10.1.zip
 Packager:   TACC - vaughn@tacc.utexas.edu
 
 ## System Definitions
@@ -21,11 +20,22 @@ Packager:   TACC - vaughn@tacc.utexas.edu
 ## directory and name definitions for relocatable RPMs
 %include ./include/name-defines.inc
 
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}BWA
+%define MODULE_VAR  %{MODULE_VAR_PREFIX}FASTQC
 
-## PACKAGE DESCRIPTION
+#------------------------------------------------
+# PACKAGE DESCRIPTION
+#------------------------------------------------
 %description
-BWA is a software package for mapping low-divergent sequences against a large reference genome, such as the human genome. It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM. The first algorithm is designed for Illumina sequence reads up to 100bp, while the rest two for longer sequences ranged from 70bp to 1Mbp. BWA-MEM and BWA-SW share similar features such as long-read support and split alignment, but BWA-MEM, which is the latest, is generally recommended for high-quality queries as it is faster and more accurate. BWA-MEM also has better performance than BWA-backtrack for 70-100bp Illumina reads.
+FastQC is an application which takes a FastQ file and runs a series
+of tests on it to generate a comprehensive QC report.  This will
+tell you if there is anything unusual about your sequence.  Each
+test is flagged as a pass, warning or fail depending on how far it
+departs from what you'd expect from a normal large dataset with no
+significant biases.  It's important to stress that warnings or even
+failures do not necessarily mean that there is a problem with your
+data, only that it is unusual.  It is possible that the biological
+nature of your sample means that you would expect this particular
+bias in your results.
 
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
@@ -34,10 +44,7 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 ## SETUP
-%setup -n %{PNAME}-%{version}
-
-## BUILD
-%build
+%setup -n FastQC
 
 #------------------------------------------------
 # INSTALL
@@ -48,16 +55,10 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 %include ./include/%{PLATFORM}/system-load.inc
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-#------------------------------------------------
-## Install Steps Start
-
-module swap $TACC_FAMILY_COMPILER gcc
-make
+cp -R ./Help ./Contaminants ./uk ./Templates ./fastqc ./*bat ./*.txt ./*.jar $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 ## Install Steps End
 #------------------------------------------------
-
-cp ./bwa *.pl $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 # MODULEFILE CREATION
@@ -69,21 +70,20 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-Documentation can be found online at http://bio-bwa.sourceforge.net/bwa.shtml
-The bwa executable can be found in %{MODULE_VAR}_DIR
+This is module %{PNAME}. Documentation is available online at the publisher\'s website: http://www.bioinformatics.babraham.ac.uk/projects/fastqc/
+Executables can be found in %{MODULE_VAR}_DIR, including "fastqc".
 
 Version %{version}
 ]])
 
-whatis("Name: bwa")
+whatis("Name: FastQC")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
-whatis("Keywords:  Biology, Genomics, Alignment, Sequencing")
-whatis("Description: Burrows-Wheeler Alignment Tool")
-whatis("URL: http://bio-bwa.sourceforge.net/")
-
-setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-prepend_path("PATH"       ,"%{INSTALL_DIR}")
+whatis("Keywords:  Biology, Genomics, Sequencing, FastQ, Quality Control")
+whatis("Description: fastqc - A Quality Control application for FastQ files")
+whatis("URL: http://www.bioinformatics.babraham.ac.uk/projects/fastqc/")
+prepend_path("PATH",    "%{INSTALL_DIR}")
+setenv (     "%{MODULE_VAR}_DIR", "%{INSTALL_DIR}")
 
 EOF
 ## Modulefile End
@@ -107,7 +107,6 @@ EOF
 #------------------------------------------------
 # FILES SECTION
 #------------------------------------------------
-#%files -n %{name}-%{comp_fam_ver}
 %files
 %defattr(-,root,install,)
 %{INSTALL_DIR}
