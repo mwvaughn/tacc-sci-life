@@ -1,14 +1,14 @@
 #------------------------------------------------
 # INITIAL DEFINITIONS
 #------------------------------------------------
-%define PNAME tabix
-Summary: Tabix - Indexes a tab-delimited genome position file in.tab.bgz and creates an index file
-Version: 0.2.6
-Release: 3
-License: GPL
-Group: Applications/Life Sciences
-Source0:  tabix-%{version}.tar.bz2
-Packager: TACC - vaughn@tacc.utexas.edu
+%define PNAME coreutils
+Version:      8.24
+Release:      1
+License:      GPL
+Group:        Applications/Life Sciences
+Source:       http://ftp.gnu.org/gnu/coreutils/coreutils-8.24.tar.xz
+Packager:     TACC - vaughn@tacc.utexas.edu
+Summary:      GNU Core Utilities are the basic file, shell and text manipulation utilities of the GNU operating system.
 
 ## System Definitions
 %include ./include/system-defines.inc
@@ -20,11 +20,11 @@ Packager: TACC - vaughn@tacc.utexas.edu
 ## directory and name definitions for relocatable RPMs
 %include ./include/name-defines.inc
 
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}TABIX
+%define MODULE_VAR  %{MODULE_VAR_PREFIX}COREUTILS
 
 ## PACKAGE DESCRIPTION
 %description
-Indexes a tab-delimited genome position file in.tab.bgz and creates an index file.
+The GNU Core Utilities are the basic file, shell and text manipulation utilities of the GNU operating system. These are the core utilities which are expected to exist on every operating system.
 
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
@@ -47,44 +47,47 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 %include ./include/%{PLATFORM}/system-load.inc
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/include
-
-#------------------------------------------------
+#--------------------------------------
 ## Install Steps Start
-
 module swap $TACC_FAMILY_COMPILER gcc
+
+configure --prefix=%{INSTALL_DIR} CPPFLAGS="-fgnu89-inline"
 make
 
-cp -R perl/ python/ tabix tabix.py TabixReader.java bgzip NEWS $RPM_BUILD_ROOT/%{INSTALL_DIR}
+## Install Steps End
+#--------------------------------------
+
+make DESTDIR=$RPM_BUILD_ROOT install
 
 #------------------------------------------------
 # MODULEFILE CREATION
 #------------------------------------------------
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
-#------------------------------------------------
+#--------------------------------------
 ## Modulefile Start
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help(
+help (
 [[
 The %{PNAME} module file defines the following environment variables:
-%{MODULE_VAR}_DIR, %{MODULE_VAR}_INC, and %{MODULE_VAR}_LIB
-associated with %{PNAME}
+%{MODULE_VAR}_DIR and %{MODULE_VAR}_LIB for the location of the %{name}
+distribution. Documentation can be found online at http://www.gnu.org/software/coreutils/manual/
 
 Version %{version}
-]]
-)
 
-whatis("Name: Tabix")
+]])
+
+whatis("Name: coreutils")
 whatis("Version: %{version}")
-whatis("Category: computational biology, genomics")
-whatis("Keywords:  Biology, Genomics, Quality Control, Utility, Sequencing, Genotyping, Resequencing, SNP")
-whatis("URL: http://samtools.sourceforge.net/")
-whatis("Description: Indexes a tab-delimited genome position file in.tab.bgz and creates an index file.")
+whatis("Category: Utilities")
+whatis("Keywords: Scripting, Utilities")
+whatis("URL: http://www.gnu.org/software/coreutils/")
+whatis("Description: Basic file, shell and text manipulation utilities of the GNU operating system.")
 
-prepend_path("PATH",              "%{INSTALL_DIR}")
-setenv (     "%{MODULE_VAR}_DIR", "%{INSTALL_DIR}/")
+prepend_path("PATH",              "%{INSTALL_DIR}/bin")
+prepend_path("MANPATH",              "%{INSTALL_DIR}/man")
+setenv (     "%{MODULE_VAR}_DIR", "%{INSTALL_DIR}")
+setenv (     "%{MODULE_VAR}_BIN", "%{INSTALL_DIR}/bin")
 
 EOF
 
