@@ -4,7 +4,7 @@
 #------------------------------------------------
 # INITIAL DEFINITIONS
 #------------------------------------------------
-%define PNAME sickle
+%define PNAME iplant_sickle
 Summary: A windowed adaptive trimming tool for FASTQ files using quality
 Version: 1.2
 Release: 2
@@ -38,7 +38,7 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 ## SETUP
-%setup -n %{PNAME}-%{version}
+%setup -n sickle-%{version}
 
 ## BUILD
 %build
