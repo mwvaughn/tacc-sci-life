@@ -19,7 +19,6 @@ Source9:  http://geant4.cern.ch/support/source/G4ABLA.3.0.tar.gz
 Source10: http://geant4.cern.ch/support/source/G4ENSDFSTATE.1.0.tar.gz
 Packager: TACC - wallen@tacc.utexas.edu
 Summary:  A toolkit for the simulation of the passage of particles through matter.
-Prefix: /opt/apps/gcc4_9
 
 ### NOTE: Source0 is the main distribution called in this spec file. The other 
 ### 10 source files (Source1-Source10) are about 640MB when unpacked. So to 
