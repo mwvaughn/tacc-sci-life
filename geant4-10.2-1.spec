@@ -40,7 +40,7 @@ Summary:  A toolkit for the simulation of the passage of particles through matte
 
 # define the data dirs and make sure they exist
 %if "%{PLATFORM}" == "ls5"
-    %define GEANT4DATA  /tmp 
+    %define GEANT4DATA  %{INSTALL_DIR}/share/Geant4-10.2.0/data
 %endif
 
 # NOTE: this build will fail on stampede because cmake >3.3 is required!
@@ -113,7 +113,15 @@ mkdir %{PNAME}.10.02 # the clean script will complain if this is not here
 mkdir %{PNAME}-%{version}/
 mkdir %{PNAME}-%{version}-cmake/build/
 cd %{PNAME}-%{version}-cmake/build/
+
+%if "%{PLATFORM}" == "ls5"
+cmake -DGEANT4_INSTALL_DATA=ON -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_DIR/%{PNAME}-%{version} -DGEANT4_BUILD_MULTITHREADED=ON ../
+%endif
+
+%if "%{PLATFORM}" == "stampede"
 cmake -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_DIR/%{PNAME}-%{version} -DGEANT4_BUILD_MULTITHREADED=ON -DGEANT4_INSTALL_DATADIR=%{GEANT4DATA} ../
+%endif
+
 make -j 4
 make install
 
@@ -172,12 +180,11 @@ setenv (     "%{MODULE_VAR}_SHARE",   "%{INSTALL_DIR}/share")
 
 setenv ( "%{MODULE_VAR}_G4ABLA", "%{GEANT4DATA}/G4ABLA3.0")
 setenv ( "%{MODULE_VAR}_G4EMLOW", "%{GEANT4DATA}/G4EMLOW6.48")
-setenv ( "%{MODULE_VAR}_G4ENSDFSTATE", "%{GEANT4DATA}/G4ENSDFSTATE1.0")
+setenv ( "%{MODULE_VAR}_G4ENSDFSTATE", "%{GEANT4DATA}/G4ENSDFSTATE1.2")
 setenv ( "%{MODULE_VAR}_G4NDL", "%{GEANT4DATA}/G4NDL4.5")
 setenv ( "%{MODULE_VAR}_G4NEUTRONXS", "%{GEANT4DATA}/G4NEUTRONXS1.4")
 setenv ( "%{MODULE_VAR}_G4PII", "%{GEANT4DATA}/G4PII1.3")
 setenv ( "%{MODULE_VAR}_G4SAIDDATA", "%{GEANT4DATA}/G4SAIDDATA1.1")
-setenv ( "%{MODULE_VAR}_G4TENDL", "%{GEANT4DATA}/G4TENDL1.0")
 setenv ( "%{MODULE_VAR}_G4PHOTONEVAPORATION", "%{GEANT4DATA}/PhotonEvaporation3.2")
 setenv ( "%{MODULE_VAR}_G4RADIOACTIVEDECAY", "%{GEANT4DATA}/RadioactiveDecay4.3")
 setenv ( "%{MODULE_VAR}_G4REALSURFACE", "%{GEANT4DATA}/RealSurface1.0")
