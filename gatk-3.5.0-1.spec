@@ -9,7 +9,6 @@ Group:    Applications/Life Sciences
 Source:   GenomeAnalysisTK-3.5.tar.bz2
 Packager: TACC - wallen@tacc.utexas.edu
 Summary:  GATK - Genome Analysis Toolkit
-Prefix: /opt/apps
 
 ## System Definitions
 %include ./include/system-defines.inc
