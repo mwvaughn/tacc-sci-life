@@ -61,6 +61,20 @@
   %define mpi_module  %{mpi_fam}/%{mpi_module_version}
 %endif
 
+%if "%{is_cray_mpich}" == "1"
+  %if %{undefined mpiV}
+    %define mpi_label 7_3
+    %define mpi_module_version 7.3.0
+  %endif
+  %if "%{mpiV}" == "7_3
+    %define mpi_label 7_3
+    %define mpi_module_version 7.3.0
+  %endif
+  %define mpi_fam     cray_mpich
+  %define mpi_fam_ver cray_mpich_%{mpi_label}
+  %define mpi_module  %{mpi_fam}/%{mpi_module_version}
+%endif
+
 
 %if "%{mpi_fam}" == "error"
   %{error: You must define which MPI you are using!}
