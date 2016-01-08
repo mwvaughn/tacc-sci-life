@@ -55,8 +55,13 @@ module load TACC
 %if "%{PLATFORM}" == "stampede"
     module swap $TACC_FAMILY_COMPILER gcc/4.9.1
     module load hdf5/1.8.16 zlib/1.2.8 cmake/3.1.0
+    export EXTRA_CMAKE_FLAGS=" -DZLIB_INCLUDE_DIR=$TACC_ZLIB_INC -DZLIB_LIBRARY=$TACC_ZLIB_LIB/libz.so "
 %endif
 
+%if "%{PLATFORM}" == "ls5"
+    module swap $TACC_FAMILY_COMPILER gcc/4.9.3
+    module load hdf5/1.8.16 cmake/3.4.1
+%endif
 
 # Install with cmake
 cd $RPM_BUILD_DIR
@@ -70,8 +75,7 @@ cmake -DCMAKE_INSTALL_PREFIX=$RPM_BUILD_DIR/%{PNAME}-%{version} \
       -DCMAKE_C_COMPILER=`which gcc` \
       -DCMAKE_CXX_COMPILER=`which g++` \
       -DHDF5_DIR=$TACC_HDF5_DIR \
-      -DZLIB_INCLUDE_DIR=$TACC_ZLIB_INC \
-      -DZLIB_LIBRARY=$TACC_ZLIB_LIB/libz.so \
+      $EXTRA_CMAKE_FLAGS \
       ../
 
 make -j 4
@@ -94,10 +98,6 @@ help (
 
 This module loads %{PNAME} version %{version} built with %{comp_fam} and cmake/3.1.0.
 Documentation for %{PNAME} is available online at: http://dock.compbio.ucsf.edu/
-The following additional modules need to be loaded when using %{PNAME}:
-    gcc/4.9.1
-    hdf5/1.8.16
-    zlib/1.2.8
 
 The executable can be found in %{MODULE_VAR}_BIN
 The test files can be found in %{MODULE_VAR}_TEST
@@ -123,6 +123,12 @@ EOF
 %if "%{PLATFORM}" == "stampede"
 cat >> $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 prereq("gcc/4.9.1", "hdf5/1.8.16", "zlib/1.2.8")
+EOF
+%endif
+
+%if "%{PLATFORM}" == "ls5"
+cat >> $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+prereq("gcc/4.9.3", "hdf5/1.8.16")
 EOF
 %endif
 
