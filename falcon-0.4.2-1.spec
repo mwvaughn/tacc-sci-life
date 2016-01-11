@@ -83,7 +83,7 @@ python setup.py install --prefix=${falcon_install}
 ## Make FALCON
 cd ${falcon}/FALCON-integrate/FALCON
 # add /dev/shm patch
-patch src/py/bash.py -i - <<EOF
+patch src/py/bash.py -i - << "EOF"
 187c187
 <         pipe = """LA4Falcon -H{length_cutoff} -fso {db_fn} {las_fn} | """
 ---
@@ -99,9 +99,13 @@ patch src/py/bash.py -i - <<EOF
 195c197
 < """ %pipe
 ---
-> """ %(db_prefix, db_prefix, db_prefix, pipe)
+> """ % (db_prefix, db_prefix, db_prefix, pipe)
 EOF
+# fix dependencies
+sed -i '/setup_requires/d' setup.py
+
 python setup.py install --prefix=${falcon_install}
+
 ## Make DAZZ_DB
 cd ${falcon}/FALCON-integrate/DAZZ_DB
 # use icc
