@@ -1,30 +1,30 @@
 #------------------------------------------------
 # INITIAL DEFINITIONS
 #------------------------------------------------
-%define   PNAME gatk
-Version:  3.5.0
+%define   PNAME star
+Version:  2.5.0a
 Release:  1
-License:  Broad Institute Software License Agreement
+License:  GPL
 Group:    Applications/Life Sciences
-Source:   GenomeAnalysisTK-3.5.tar.bz2
+Source:   https://github.com/alexdobin/STAR/archive/STAR_2.5.0a.tar.gz
 Packager: TACC - wallen@tacc.utexas.edu
-Summary:  GATK - Genome Analysis Toolkit
+Summary:  Spliced Transcripts Alignment to a Reference
 
 ## System Definitions
 %include ./include/system-defines.inc
 %include ./include/%{PLATFORM}/rpm-dir.inc
 ## Compiler Family Definitions
-# %include ./include/%{PLATFORM}/compiler-defines.inc
+%include ./include/%{PLATFORM}/compiler-defines.inc
 ## MPI Family Definitions
 # %include ./include/%{PLATFORM}/mpi-defines.inc
 ## directory and name definitions for relocatable RPMs
 %include ./include/name-defines.inc
 
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}GATK
+%define MODULE_VAR  %{MODULE_VAR_PREFIX}STAR
 
 ## PACKAGE DESCRIPTION
 %description
-The Genome Analysis Toolkit or GATK is a software package developed at the Broad Institute to analyze high-throughput sequencing data. The toolkit offers a wide variety of tools, with a primary focus on variant discovery and genotyping as well as strong emphasis on data quality assurance. Its robust architecture, powerful processing engine and high-performance computing features make it capable of taking on projects of any size.
+Paraphrasing from the STAR manual, the basic STAR workflow consists of 2 steps: (1) Generating genome indexes files. In this step user supplied the reference genome sequences (FASTA files) and annotations (GTF file), from which STAR generate genome indexes that are utilized in the 2nd (map-ping) step. The genome indexes are saved to disk and need only be generated once for each genome/annotation combination. (2) Mapping reads to the genome. In this step user supplies the genome files generated in the 1st step, as well as the RNA-seq reads (sequences) in the form of FASTA or FASTQ files. STAR maps the reads to the genome, and writes several output files, such as alignments (SAM/BAM), mapping summary statistics, splice junctions, unmapped reads, signal (wiggle) tracks etc.
 
 ## PREP
 %prep
@@ -33,8 +33,7 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 ## SETUP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
-# the -c option creates a dir and changes to it before unpacking
-%setup -c -n GenomeAnalysisTK-3.5
+%setup -n STAR-STAR_%{version}
 
 ## BUILD
 %build
@@ -46,8 +45,6 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 # Start with a clean environment
 %include ./include/%{PLATFORM}/system-load.inc
-
-# Create a directory 
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #--------------------------------------
@@ -55,11 +52,27 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 module purge
 module load TACC
 
-# GATK is pre-compiled, no install necessary
+%if "%{PLATFORM}" == "stampede"
+    module swap $TACC_FAMILY_COMPILER gcc/4.9.1
+%endif
+
+%if "%{PLATFORM}" == "wrangler"
+    module swap $TACC_FAMILY_COMPILER gcc/4.9.1
+%endif
+
+%if "%{PLATFORM}" == "ls5"
+    module swap $TACC_FAMILY_COMPILER gcc/5.2.0
+%endif
+
+cd source/
+make STAR
+make STARlong
 
 # Copy the binaries
-cp -r ./resources/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-cp -r GenomeAnalysisTK.jar $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+mkdir $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+cp ./STAR $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
+cp ./STARlong $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/
+cp -r ../extras/ $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 # MODULEFILE CREATION
@@ -73,10 +86,9 @@ help (
 [[
 
 This module loads %{PNAME} version %{version}
-Documentation for %{PNAME} is available online at: https://www.broadinstitute.org/gatk/download/
+Documentation for %{PNAME} is available online at: https://github.com/alexdobin/STAR/
 
-The executables can be found in %{MODULE_VAR}_DIR
-Resources, including test files, can be found in %{MODULE_VAR}_RESOURCES
+The executables can be found in %{MODULE_VAR}_DIR/bin/
 
 Version %{version}
 
@@ -86,15 +98,36 @@ whatis("Name: %{PNAME}")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
 whatis("Keywords:  Biology, Genomics, Genotyping, Resequencing, SNP")
-whatis("Description: The Genome Analysis Toolkit or GATK is a software package developed at the Broad Institute to analyze high-throughput sequencing data.")
+whatis("Description: STAR - Spliced Transcripts Alignment to a Reference.")
 
-whatis("URL: https://www.broadinstitute.org/gatk/download/")
+whatis("URL: https://github.com/alexdobin/STAR/")
 
+prepend_path("PATH", "%{INSTALL_DIR}/bin")
 setenv("%{MODULE_VAR}_DIR", "%{INSTALL_DIR}/")
-setenv("%{MODULE_VAR}_RESOURCES", "%{INSTALL_DIR}/resources/")
-prepend_path("PATH", "%{INSTALL_DIR}")
+setenv("%{MODULE_VAR}_BIN", "%{INSTALL_DIR}/bin/")
+setenv("%{MODULE_VAR}_EXTRAS", "%{INSTALL_DIR}/extras/")
 
 EOF
+
+%if "%{PLATFORM}" == "stampede"
+cat >> $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+prereq("gcc/4.9.1")
+EOF
+%endif
+
+%if "%{PLATFORM}" == "wrangler"
+cat >> $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+prereq("gcc/4.9.1")
+EOF
+%endif
+
+%if "%{PLATFORM}" == "ls5"
+cat >> $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+prereq("gcc/5.2.0")
+EOF
+%endif
+
+
 ## Modulefile End
 #--------------------------------------
 
@@ -136,11 +169,16 @@ cd /tmp
 rm -rf $RPM_BUILD_ROOT
 
 
+
 # In SPECS dir:
-# ./build_rpm.sh gatk-3.5.0-1.spec
+# ./build_rpm.sh --gcc=49 star-2.5.0a-1.spec
+# ./build_rpm.sh --gcc=52 star-2.5.0a-1.spec
 #
 # In apps dir: 
 # export RPM_DBPATH=$PWD/db/
 # rpm --dbpath $PWD/db --relocate /opt/apps=$PWD -Uvh --force --nodeps /path/to/rpm/file/rpm_file.rpm
+# sed -i 's?opt/apps?work/03439/wallen/stampede/apps?g' /path/to/modulefiles/package/version.lua
+#
+# Or, in SPECS dir:
 # ./scripts/myRpmInstall $WORK/$PLATFORM/apps/ /path/to/rpm_file.rpm
 
