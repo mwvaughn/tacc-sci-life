@@ -4,12 +4,15 @@
 %define PNAME mummer
 Summary:    MUMmer - A modular system for the rapid whole genome alignment of finished or draft sequence
 Version:    3.23
-Release:    3
+Release:    4
 License:    OSI Certified Open Source Software
 Group: Applications/Life Sciences
-Source:     MUMmer%{version}.tar.gz
 Source: http://sourceforge.net/projects/mummer/files/mummer/%{version}/MUMmer%{version}.tar.gz
 Packager:   TACC - vaughn@tacc.utexas.edu
+
+# Force the module to NOT be relocatable
+# See the hack in the install section for why this is not a portable RPM
+Prefix: /opt/apps
 
 ## System Definitions
 %include ./include/system-defines.inc
@@ -36,7 +39,6 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 # Unpack source
-# This will unpack the source to /tmp/BUILD/bwa-VERSION
 %setup -n MUMmer%{version}
 
 #------------------------------------------------
@@ -58,23 +60,33 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 make
 
+# Manually fix paths for Mummer. This means the RPM will not be relocatable but
+# the underlying scripts are too dumb for this to work otherwise
+
+OWD=$PWD
+TARGET_DIR=%{INSTALL_DIR}
+SCRIPTS=$(find . -maxdepth 2 -type f -exec grep -Iq . {} \; -and -print)
+for X in $SCRIPTS
+    do
+    echo $X
+    sed -i "s|$OWD|$TARGET_DIR|g" $X
+done
+
 rm -rf src Makefile
 cp -R ./* $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-# ADD ALL MODULE STUFF HERE
+# Modulefile Begin
 
 rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-This module loads %{name} built with gcc. Documentation is available online at the publisher's website:
+This module loads %{pname} built with gcc. Documentation is available online at
 
 http://mummer.sourceforge.net/
 
 The MUMmer executables can be found in %{MODULE_VAR}_DIR
-
-Dependencies: MUMmer is a complex workflow system, with many potential dependencies.
 
 Version %{version}
 ]])
@@ -88,17 +100,20 @@ whatis("URL: http://mummer.sourceforge.net/")
 
 setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}/")
 
-prereq ("perl")
-
 prepend_path("PATH"       ,"%{INSTALL_DIR}/")
 prepend_path("PERL5LIB"       ,"%{INSTALL_DIR}/scripts")
 
 EOF
 
-#--------------
-#  Version file.
-#--------------
+# Modulefile End
 
+
+## Lua syntax check
+if [ -f $SPEC_DIR/checkModuleSyntax ]; then
+    $SPEC_DIR/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
+fi
+
+## VERSION FILE
 cat > $RPM_BUILD_ROOT%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
@@ -108,26 +123,22 @@ cat > $RPM_BUILD_ROOT%{MODULE_DIR}/.version.%{version} << 'EOF'
 set     ModulesVersion      "%{version}"
 EOF
 
-
-
 #------------------------------------------------
 # FILES SECTION
 #------------------------------------------------
+#%files -n %{name}-%{comp_fam_ver}
 %files
-
-# Define files permisions, user and group
-%defattr(755,root,root,-)
+%defattr(-,root,install,)
 %{INSTALL_DIR}
 %{MODULE_DIR}
 
-#------------------------------------------------
-# CLEAN UP SECTION
-#------------------------------------------------
+## POST
 %post
+
+## CLEAN UP
 %clean
 # Make sure we are not within one of the directories we try to delete
 cd /tmp
 
 # Remove the installation files now that the RPM has been generated
 rm -rf $RPM_BUILD_ROOT
-
