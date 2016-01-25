@@ -10,7 +10,6 @@ Vendor:     Shaun Purcell
 Group: Applications/Life Sciences
 Source: http://pngu.mgh.harvard.edu/~purcell/plink/dist/plink-1.07-src.zip
 Packager:   TACC - vaughn@tacc.utexas.edu
-Prefix: /opt/apps
 
 ## System Definitions
 %include ./include/system-defines.inc
@@ -57,8 +56,9 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #------------------------------------------------
 ## Install Steps Start
 module swap $TACC_FAMILY_COMPILER gcc
-#make
-make 'LIBS=-ldl' CXXFLAGS='-O3 -I. -DUNIX -DWITH_R_PLUGINS -DWITH_ZLIB -lpthread'
+
+make 'LIBS=-ldl'
+#make 'LIBS=-ldl' CXXFLAGS='-O3 -I. -DUNIX -DWITH_R_PLUGINS -DWITH_ZLIB -lpthread'
 
 ## Install Steps End
 #------------------------------------------------
@@ -75,7 +75,7 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-This module provides the plink executable. Documentation for %{PNAME} is available online at the publisher's website: http://pngu.mgh.harvard.edu/~purcell/plink/
+This module provides %{pname}. Documentation is available online at the publisher's website: http://pngu.mgh.harvard.edu/~purcell/plink/
 The plink executable can be found in %{MODULE_VAR}_DIR
 
 Version %{version}

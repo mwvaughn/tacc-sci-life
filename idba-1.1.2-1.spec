@@ -58,9 +58,9 @@ automake --add-missing
 #./configure --prefix=%{INSTALL_DIR}
 ./configure
 make clean
-make -j 4
+make -j 8 CFLAGS='-march=sandybridge -mtune=haswell' CXXFLAGS='-march=sandybridge -mtune=haswell'
 # Derp. make install is broken at least on Stampede
-#make DESTDIR=$RPM_BUILD_ROOT install
+make install
 
 ## Install Steps End
 #--------------------------------------
