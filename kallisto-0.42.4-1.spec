@@ -61,6 +61,8 @@ module load TACC
 %if "%{PLATFORM}" == "ls5"
     module swap $TACC_FAMILY_COMPILER gcc/4.9.3
     module load hdf5/1.8.16 cmake/3.4.1
+    export CFLAGS="-O3 -march=sandybridge -mtune=haswell"
+    export LDFLAGS="-march=sandybridge -mtune=haswell"
 %endif
 
 # Install with cmake

@@ -65,6 +65,8 @@ module load TACC
 %if "%{PLATFORM}" == "ls5"
     module swap $TACC_FAMILY_COMPILER gcc/4.9.3
     module load cmake/3.4.1
+    export CFLAGS="-O3 -march=sandybridge -mtune=haswell"
+    export LDFLAGS="-march=sandybridge -mtune=haswell"
 %endif
 
 export CC=`which gcc`
@@ -202,5 +204,5 @@ rm -rf $RPM_BUILD_ROOT
 # In apps dir: 
 # export RPM_DBPATH=$PWD/db/
 # rpm --dbpath $PWD/db --relocate /opt/apps=$PWD -Uvh --force --nodeps /path/to/rpm/file/rpm_file.rpm
-# ./scripts/myRpmInstall $WORK/$PLATFORM/apps/ /path/to/rpm_file.rpm
+# sed -i 's?opt/apps?work/03439/wallen/stampede/apps?g' /path/to/modulefiles/package/version.lua
 

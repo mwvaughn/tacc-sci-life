@@ -51,7 +51,6 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ## Install Steps Start
 module purge
 module load TACC
-module swap $TACC_FAMILY_COMPILER intel 
 
 %if "%{PLATFORM}" == "stampede"
     module swap $TACC_FAMILY_COMPILER intel/15.0.2
@@ -66,6 +65,8 @@ module swap $TACC_FAMILY_COMPILER intel
 %if "%{PLATFORM}" == "ls5"
     module swap $TACC_FAMILY_COMPILER intel/16.0.1
     module swap $TACC_FAMILY_MPI cray_mpich/7.3.0
+    export CFLAGS="-O3 -xAVX -axCORE-AVX2"
+    export LDFLAGS="-xAVX -axCORE-AVX2"
 %endif
 
 # Do the 6.7 bugfix
@@ -75,13 +76,24 @@ patch -N -p0 < install/bugfix.1
 # Install serial version
 cd $RPM_BUILD_DIR/%{PNAME}-%{version}/install
 ./configure intel
-make
+
+%if "%{PLATFORM}" == "ls5"
+    make CFLAGS="-xAVX -axCORE-AVX2" CXXFLAGS="-xAVX -axCORE-AVX2"
+%else
+    make
+%endif
+
     
 # Install MPI version
 make clean
 export MPICH_HOME=` which mpicc | awk -F '/bin' '{print $1}' `
 ./configure intel.parallel
-make dock
+
+%if "%{PLATFORM}" == "ls5"
+    make dock CFLAGS="-xAVX -axCORE-AVX2" CXXFLAGS="-xAVX -axCORE-AVX2"
+%else
+    make dock
+%endif
 
 # Copy the binaries
 cp -r ../bin/ $RPM_BUILD_ROOT/%{INSTALL_DIR}/
@@ -104,10 +116,15 @@ This module loads %{PNAME} built with %{comp_fam} and %{mpi_fam}. The serial and
     dock6
     dock6.mpi
 
-Documentation for %{PNAME} is available online at: http://dock.compbio.ucsf.edu/
-
 The executables can be found in %{MODULE_VAR}_BIN
 The parameter files can be found in %{MODULE_VAR}_PARAMS
+
+Documentation for %{PNAME} is available online at: http://dock.compbio.ucsf.edu/
+
+NOTE: Kuntz Lab programs are available free of charge for academic institutions, but there is a
+licensing fee for industrial organizations. Full terms of service here:
+
+http://dock.compbio.ucsf.edu/Online_Licensing/index.htm
 
 Version %{version}
 
@@ -193,7 +210,4 @@ rm -rf $RPM_BUILD_ROOT
 # export RPM_DBPATH=$PWD/db/
 # rpm --dbpath $PWD/db --relocate /opt/apps=$PWD -Uvh --force --nodeps /path/to/rpm/file/rpm_file.rpm
 # sed -i 's?opt/apps?work/03439/wallen/stampede/apps?g' /path/to/modulefiles/package/version.lua
-# 
-# Or, in SPECS dir:
-# ./scripts/myRpmInstall $WORK/$PLATFORM/apps/ /path/to/rpm_file.rpm
 
