@@ -58,7 +58,7 @@ automake --add-missing
 #./configure --prefix=%{INSTALL_DIR}
 ./configure
 make clean
-make -j 8
+make -j 8 CFLAGS='-march=sandybridge -mtune=haswell' CXXFLAGS='-march=sandybridge -mtune=haswell'
 # Derp. make install is broken at least on Stampede
 make install
 

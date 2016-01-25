@@ -57,8 +57,8 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 ## Install Steps Start
-
-make
+# CFLAGS='-march=sandybridge -mtune=haswell' CXXFLAGS='-march=sandybridge -mtune=haswell'
+make CFLAGS='-march=sandybridge -mtune=haswell' CXXFLAGS='-march=sandybridge -mtune=haswell'
 
 # Manually fix paths for Mummer. This means the RPM will not be relocatable but
 # the underlying scripts are too dumb for this to work otherwise

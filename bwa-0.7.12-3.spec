@@ -53,7 +53,7 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ## Install Steps Start
 
 module swap $TACC_FAMILY_COMPILER gcc
-make
+make CFLAGS='-march=sandybridge -mtune=haswell' CXXFLAGS='-march=sandybridge -mtune=haswell'
 
 ## Install Steps End
 #------------------------------------------------

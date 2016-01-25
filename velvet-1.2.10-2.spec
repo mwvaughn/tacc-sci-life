@@ -60,8 +60,8 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ## Install Steps Start
 
 module swap $TACC_FAMILY_COMPILER gcc
-
-make 'CFLAGS=-openmp -m64' 'MAXKMERLENGTH=64' 'LONGSEQUENCES=1' 'CATEGORIES=4' cleanobj zlib obj velveth velvetg
+# CFLAGS='-march=sandybridge -mtune=haswell' CXXFLAGS='-march=sandybridge -mtune=haswell'
+make 'CFLAGS=-openmp -m64 -march=sandybridge -mtune=haswell' 'MAXKMERLENGTH=64' 'LONGSEQUENCES=1' 'CATEGORIES=4' cleanobj zlib obj velveth velvetg
 
 ## Install Steps End
 #------------------------------------------------

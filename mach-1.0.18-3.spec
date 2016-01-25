@@ -47,7 +47,8 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 # Original CFLAGS contained -static which was causing failure
-make all 'CFLAGS=-O2 -I./libsrc -I./mach1 -D__ZLIB_AVAILABLE__  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE'
+# CFLAGS='-march=sandybridge -mtune=haswell' CXXFLAGS='-march=sandybridge -mtune=haswell'
+make all 'CFLAGS=-O2 -march=sandybridge -mtune=haswell -I./libsrc -I./mach1 -D__ZLIB_AVAILABLE__  -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE'
 
 # May want to revisit placement of this, or alternative implementation
 export DONT_STRIP=1

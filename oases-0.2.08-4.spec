@@ -64,7 +64,7 @@ module swap $TACC_FAMILY_COMPILER gcc
 # Build parallel version
 #-----------------------------
 
-make -k 'VELVET_DIR=%{_topdir}/BUILD/velvet_1.2.10/' 'CFLAGS=-openmp -m64' 'MAXKMERLENGTH=64' 'LONGSEQUENCES=1' 'CATEGORIES=4'
+make -k 'VELVET_DIR=%{_topdir}/BUILD/velvet_1.2.10/' 'CFLAGS=-openmp -m64 -march=sandybridge -mtune=haswell' 'MAXKMERLENGTH=64' 'LONGSEQUENCES=1' 'CATEGORIES=4'
 
 cp -R ./oases ./data ./doc ./scripts ./OasesManual.pdf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
