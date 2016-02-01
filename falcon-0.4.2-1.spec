@@ -87,19 +87,20 @@ patch src/py/bash.py -i - << "EOF"
 187c187
 <         pipe = """LA4Falcon -H{length_cutoff} -fso {db_fn} {las_fn} | """
 ---
->         pipe = """LA4Falcon -H{length_cutoff} -fso /dev/shm/raw_reads {las_fn} | """
+>         pipe = """LA4Falcon -H{length_cutoff} -fso /dev/shm/falcon/raw_reads {las_fn} | """
 189c189
 <         pipe = """LA4Falcon -H{length_cutoff}  -fo {db_fn} {las_fn} | """
 ---
->         pipe = """LA4Falcon -H{length_cutoff}  -fo /dev/shm/raw_reads {las_fn} | """
+>         pipe = """LA4Falcon -H{length_cutoff}  -fo /dev/shm/falcon/raw_reads {las_fn} | """
 190a191
 >     db_prefix = os.path.split(db_fn)[0]
 193a195
-> cp %s/raw_reads.db %s/.raw_reads.bps %s/.raw_reads.idx /dev/shm/
-195c197
+> mkdir /dev/shm/falcon && cp %s/raw_reads.db %s/.raw_reads.bps %s/.raw_reads.idx /dev/shm/falcon/
+195c197,198
 < """ %pipe
 ---
-> """ % (db_prefix, db_prefix, db_prefix, pipe)
+> rm -rf /dev/shm/falcon
+> """ %(db_prefix, db_prefix, db_prefix, pipe)
 EOF
 # fix dependencies
 sed -i '/setup_requires/d' setup.py
