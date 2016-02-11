@@ -7,7 +7,7 @@ Packager:   TACC - jawon@tacc.utexas.edu
 Source:     https://pypi.python.org/packages/source/M/MACS2/MACS2-2.1.0.20150731.tar.gz
 Vendor:     DFCI
 Group: Applications/Life Sciences
-Release:   2
+Release:   3
 
 ## System Definitions
 %include ./include/system-defines.inc
