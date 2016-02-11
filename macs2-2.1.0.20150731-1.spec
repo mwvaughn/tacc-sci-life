@@ -53,11 +53,24 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ## Install Steps End
 #--------------------------------------
 module load python
-mkdir -p $PWD/lib/python2.7/site-packages
-export PYTHONPATH=$PWD/lib/python2.7/site-packages:$PYTHONPATH
-python setup.py build 
+#mkdir -p $PWD/lib/python2.7/site-packages
+#export PYTHONPATH=$PWD/lib/python2.7/site-packages:$PYTHONPATH
+#python setup.py build 
 python setup.py install --prefix $PWD
 cp -R * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+if [ `hostname` == *.ls5.tacc.utexas.edu ]
+then
+	module load python
+	python setup_w_cython.py install --prefix $PWD
+	cp -R * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+else 
+    module load python
+    #module swap $TACC_FAMILY_COMPILER gcc
+    python setup_w_cython.py install --prefix $PWD
+    cp -R * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+    
+fi
 
 #------------------------------------------------
 # MODULEFILE CREATION
