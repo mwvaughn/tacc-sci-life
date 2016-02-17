@@ -15,7 +15,7 @@ Summary:  An open-source program for doing molecular docking
 %include ./include/system-defines.inc
 %include ./include/%{PLATFORM}/rpm-dir.inc
 ## Compiler Family Definitions
-%include ./include/%{PLATFORM}/compiler-defines.inc
+#%include ./include/%{PLATFORM}/compiler-defines.inc
 ## MPI Family Definitions
 #%include ./include/%{PLATFORM}/mpi-defines.inc
 ## directory and name definitions for relocatable RPMs
@@ -125,12 +125,6 @@ setenv(      "%{MODULE_VAR}_BIN",    "%{INSTALL_DIR}/bin/")
 
 EOF
 
-%if "%{PLATFORM}" == "ls5"
-cat >> $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-prereq("gcc/4.9.3", "boost/1.59")
-EOF
-%endif
-
 ## Modulefile End
 #--------------------------------------
 
@@ -172,7 +166,7 @@ cd /tmp
 rm -rf $RPM_BUILD_ROOT
 
 # In SPECS dir:
-# ./build_rpm.sh --gcc=49 autodock_vina-1.1.2-2.spec   # lonestar5 
+# ./build_rpm.sh autodock_vina-1.1.2-2.spec   # lonestar5 
 #
 # In apps dir: 
 # export RPM_DBPATH=$PWD/db/
