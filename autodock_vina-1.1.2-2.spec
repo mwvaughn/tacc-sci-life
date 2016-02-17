@@ -127,7 +127,7 @@ EOF
 
 %if "%{PLATFORM}" == "ls5"
 cat >> $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-prereq("intel/16.0.1", "boost/1.59")
+prereq("gcc/4.9.3", "boost/1.59")
 EOF
 %endif
 
