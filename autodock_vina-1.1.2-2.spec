@@ -101,7 +101,7 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
 
-This module loads %{PNAME} built with %{comp_fam}.
+This module loads %{PNAME} built with g++.
 The following executables can be found in %{MODULE_VAR}_BIN:
     vina
     vina_split
