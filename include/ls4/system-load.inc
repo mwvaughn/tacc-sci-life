@@ -9,4 +9,5 @@ fi
 
 export MODULEPATH=/opt/apps/modulefiles:/opt/modulefiles
 
+module load TACC
 
