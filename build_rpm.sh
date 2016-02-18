@@ -14,7 +14,7 @@ ECHO()
     builtin echo "$@" >> $logName.log
   fi
 }
-    
+
 # This script needs lua but should not require that a working module
 # system be in place.  So we search for lua the old fashion way.
 
@@ -45,6 +45,7 @@ intelV="unknown"
 pgiV="unknown"
 impiV="unknown"
 mvapich2V="unknown"
+cmpich="unknown"
 openmpiV="unknown"
 debug="%{nil}"
 comp="none"
@@ -52,7 +53,7 @@ mpi="none"
 mpiV="%{nil}"
 build=b
 
-TEMP=`getopt -o hb:fdlg:i:j:p:m:o:v --long help,build:,debug,log,gcc:,intel:,pgi:,impi:,,mvapich2:,openmpi:,force,show,version \
+TEMP=`getopt -o hb:fdlg:i:j:p:m:o:v --long help,build:,debug,log,gcc:,intel:,pgi:,impi:,,mvapich2:,openmpi:,cmpich:,force,show,version \
      -n 'build' -- "$@"`
 if [ $? != 0 ] ; then
   echo "For usage of $0 do: $0 --help"
@@ -71,12 +72,13 @@ while true ; do
     -h|--help)     help=1;                         shift   ;;
     -b|--build)    build=$2;                       shift 2 ;;
     -d|--debug)    debug=1;                        shift   ;;
-    -l|--log)      log=1;                          shift   ;;           
+    -l|--log)      log=1;                          shift   ;;
     -g|--gcc)      comp="gcc";     gccV="$2";      shift 2 ;;
     -i|--intel)    comp="intel";   intelV="$2";    shift 2 ;;
     -p|--pgi)      comp="pgi";     pgiV="$2";      shift 2 ;;
     -m|--mvapich2) mpi="mvapich2"; mvapich2V="$2"; shift 2 ;;
     -j|--impi)     mpi="impi";     impiV="$2";     shift 2 ;;
+    -c|--cmpich)   mpi="cmpich";   cmpichV="$2";   shift 2 ;;
     -o|--openmpi)  mpi="openmpi";  openmpiV="$2";  shift 2 ;;
     --show)        show=1;                                                  shift   ;;
     --) shift; break;;
@@ -103,12 +105,13 @@ if [ -n "$help" ]; then
   echo "Options to control how the rpm file is built:"
   echo "  -bL | --build L    : rpmbuild build command p prep, c compile, b build all ..."
   echo "                     : (Default is: -bb)"
-  echo "  -gV | --gcc=V      : build with gcc       with version V"
-  echo "  -iV | --intel=V    : build with intel     with version V"
-  echo "  -pV | --pgi=V      : build with pgi       with version V"
-  echo "  -jV | --impi=V     : build with impi      with version V"
-  echo "  -mV | --mvapich2=V : build with mvapich2  with version V"
-  echo "  -oV | --openmpi=V  : build with openmpi   with version V"
+  echo "  -gV | --gcc=V      : build with gcc         with version V"
+  echo "  -iV | --intel=V    : build with intel       with version V"
+  echo "  -pV | --pgi=V      : build with pgi         with version V"
+  echo "  -jV | --impi=V     : build with impi        with version V"
+  echo "  -mV | --mvapich2=V : build with mvapich2    with version V"
+  echo "  -cV | --cmpich=V   : build with cray-mpich  with version V"
+  echo "  -oV | --openmpi=V  : build with openmpi     with version V"
   echo ""
   echo "To specify a version of a compiler or MPI stack do:"
   echo "     $0 -i15 -m2_1 name.spec"
@@ -142,7 +145,7 @@ fi
 
 # MPI
 if [ "$mpi" != "none" ]; then
-   argA=(${argA[@]}          "--define 'is_$mpi 1'" "--define 'mpiV $mpiV'") 
+   argA=(${argA[@]}          "--define 'is_$mpi 1'" "--define 'mpiV $mpiV'")
    pSargA=(${pSargA[@]} "-m" "--define 'is_$mpi 1'" "--define 'mpiV $mpiV'")
    logA=(${logA[@]} "${mpi}_$mpiV")
 fi
@@ -170,7 +173,7 @@ if [ -n "$log" ]; then
   logName=`echo "$logName" | sed -e 's/_$//g'`
   argA=(${argA[@]} "2>&1 | tee -a $logName.log")
 fi
-  
+
 # eval parseSpec "${pSargA[@]}"
 # if [ "$?" != 0 ]; then
 #   if [ "$force" == 0 ]; then
@@ -200,8 +203,9 @@ fi
 
 
 t1=`date +%s`
-eval  rpmbuild "${argA[@]}" 
+eval  rpmbuild "${argA[@]}"
 t2=`date +%s`
 numSec=`echo "$t2 - $t1" | bc -q`
 runTime=`date -ud @$numSec +%T`
 ECHO "Time to build: $runTime ($numSec seconds)"
+
