@@ -65,7 +65,6 @@ module load TACC
 %if "%{PLATFORM}" == "ls5"
     module swap $TACC_FAMILY_COMPILER intel/16.0.1
     module swap $TACC_FAMILY_MPI cray_mpich/7.3.0
-    export CFLAGS="-O3 -xAVX -axCORE-AVX2"
     export LDFLAGS="-xAVX -axCORE-AVX2"
 %endif
 
@@ -78,7 +77,7 @@ cd $RPM_BUILD_DIR/%{PNAME}-%{version}/install
 ./configure intel
 
 %if "%{PLATFORM}" == "ls5"
-    make CFLAGS="-xAVX -axCORE-AVX2" CXXFLAGS="-xAVX -axCORE-AVX2"
+    make CPPFLAGS="-xAVX -axCORE-AVX2"
 %else
     make
 %endif
@@ -90,7 +89,7 @@ export MPICH_HOME=` which mpicc | awk -F '/bin' '{print $1}' `
 ./configure intel.parallel
 
 %if "%{PLATFORM}" == "ls5"
-    make dock CFLAGS="-xAVX -axCORE-AVX2" CXXFLAGS="-xAVX -axCORE-AVX2"
+    make dock CPPFLAGS="-xAVX -axCORE-AVX2" 
 %else
     make dock
 %endif
@@ -204,7 +203,7 @@ rm -rf $RPM_BUILD_ROOT
 
 # In SPECS dir:
 # ./build_rpm.sh --intel=15 --mvapich2=2_1 dock-6.7-2.spec    #stampede; wrangler
-# rpmbuild -bb --define 'is_intel16 1' --define 'compV 16' --define 'is_cray_mpich 1' --define 'mpiV 7_3' dock-6.7-2.spec
+# ./build_rpm.sh --intel=16 --cmpich=7_3 dock-6.7-2.spec      #ls5
 #
 # In apps dir: 
 # export RPM_DBPATH=$PWD/db/
