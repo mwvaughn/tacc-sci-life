@@ -72,7 +72,7 @@ mkdir -p ${python_site}
 [ -d FALCON-integrate ] && rm -rf FALCON-integrate
 git clone --recursive git@github.com:PacificBiosciences/FALCON-integrate.git
 cd FALCON-integrate
-git checkout cd9e9373a9f897bc429ecf820809c6d773ee5c44
+git checkout 4b7d4c95870176193615eb497c01e48f4688899d
 
 ## Make pypeFLOW
 cd pypeFLOW
@@ -84,23 +84,38 @@ python setup.py install --prefix=${falcon_install}
 cd ${falcon}/FALCON-integrate/FALCON
 # add /dev/shm patch
 patch src/py/bash.py -i - << "EOF"
-187c187
+123a124
+> sleep 1
+125,126c126,128
+< #rm -f *.C?.las
+< #rm -f *.N?.las
+---
+> sleep 1
+> rm -f *.C?.las
+> rm -f *.N?.las
+173a176
+>         script.append("function retry { for i in {1..3}; do ( $@ ) && return 0 || sleep 2; done; return 1; }")
+175c178
+<             script.append(line.replace('&&', ';'))
+---
+>             script.append("retry "+line)
+187c190
 <         pipe = """LA4Falcon -H{length_cutoff} -fso {db_fn} {las_fn} | """
 ---
 >         pipe = """LA4Falcon -H{length_cutoff} -fso /dev/shm/falcon/raw_reads {las_fn} | """
-189c189
+189c192
 <         pipe = """LA4Falcon -H{length_cutoff}  -fo {db_fn} {las_fn} | """
 ---
 >         pipe = """LA4Falcon -H{length_cutoff}  -fo /dev/shm/falcon/raw_reads {las_fn} | """
-190a191
+190a194
 >     db_prefix = os.path.split(db_fn)[0]
-193a195
+193a198
 > mkdir /dev/shm/falcon && cp %s/raw_reads.db %s/.raw_reads.bps %s/.raw_reads.idx /dev/shm/falcon/
-195c197,198
+195c200,201
 < """ %pipe
 ---
 > rm -rf /dev/shm/falcon
-> """ %(db_prefix, db_prefix, db_prefix, pipe)
+> """ % (db_prefix, db_prefix, db_prefix, pipe)
 EOF
 # fix dependencies
 sed -i '/setup_requires/d' setup.py
@@ -111,16 +126,37 @@ python setup.py install --prefix=${falcon_install}
 cd ${falcon}/FALCON-integrate/DAZZ_DB
 # use icc
 sed -i 's/gcc/icc/g' Makefile
-make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -xHOST -no-ansi-alias"
+if [ "%{PLATFORM}" != "ls5" ]
+then
+	make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -xHOST -no-ansi-alias"
+else
+	make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -xAVX -axCORE-AVX2 -no-ansi-alias"
+fi
 [ -d ${falcon_install}/bin ] || mkdir ${falcon_install}/bin
 cp fasta2DB DB2fasta quiva2DB DB2quiva DBsplit DBdust Catrack DBshow DBstats DBrm simulator fasta2DAM DAM2fasta ${falcon_install}/bin
 ## Make DALIGNER
 cd ${falcon}/FALCON-integrate/DALIGNER
-# Set the number of pthreads (NTHREADS) to 16 to match Stampede architecture
-# Set NSHIFT =  log_2(NTHREADS) = 4
-sed -i 's/NTHREADS  4/NTHREADS  16/' filter.h
-sed -i 's/NSHIFT    2/NSHIFT    4/' filter.h
-make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -no-ansi-alias -xHOST"
+patch HPCdaligner.c -i - << "EOF"
+406a407,408
+>                 printf(" %s.%d.%s.%d.C%d.las",root,i,root,j,k);
+>                 printf(" %s.%d.%s.%d.N%d.las",root,i,root,j,k);
+410a413,414
+>                 printf(" %s.%s.C%d.las",root,root,k);
+>                 printf(" %s.%s.N%d.las",root,root,k);
+EOF
+if [ "%{PLATFORM}" != "ls5" ]
+then
+	# Set the number of pthreads (NTHREADS) to 16 to for Stampede
+	sed -i 's/NTHREADS  4/NTHREADS  16/' filter.h
+	# Set NSHIFT =  log_2(NTHREADS) = 4
+	sed -i 's/NSHIFT    2/NSHIFT    4/' filter.h
+	make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -no-ansi-alias -xHOST"
+else
+	# Use 32 threads on LS5 since HT is on an this code is IO bound.
+	sed -i 's/NTHREADS  4/NTHREADS  32/' filter.h
+	sed -i 's/NSHIFT    2/NSHIFT    5/' filter.h
+	make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -no-ansi-alias -xAVX -axCORE-AVX2"
+fi
 cp daligner HPCdaligner HPCmapper LAsort LAmerge LAsplit LAcat LAshow LAcheck daligner_p LA4Falcon DB2Falcon  ${falcon_install}/bin
 
 ## Install Steps End
@@ -158,6 +194,8 @@ setenv("%{MODULE_VAR}_DIR",     "%{INSTALL_DIR}")
 setenv("FALCON_PREFIX",		"%{INSTALL_DIR}")
 setenv("%{MODULE_VAR}_LIB",	pathJoin("%{INSTALL_DIR}", "lib"))
 setenv("%{MODULE_VAR}_BIN",	pathJoin("%{INSTALL_DIR}", "bin"))
+
+prereq("python","hdf5")
 EOF
 ## Modulefile End
 #--------------------------------------
