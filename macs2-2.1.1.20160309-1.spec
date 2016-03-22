@@ -1,10 +1,10 @@
 %define PNAME macs2
 Summary:    MACS2 peak caller
-Version: 2.1.1.20160226
+Version: 2.1.1.20160309
 License:    GPL
 URL:        https://github.com/taoliu/MACS/releases
 Packager:   TACC - jawon@tacc.utexas.edu
-Source:     https://pypi.python.org/packages/source/M/MACS2/MACS2-2.1.1.20160226.tar.gz
+Source:     https://pypi.python.org/packages/source/M/MACS2/MACS2-2.1.1.20160309.tar.gz
 Vendor:     DFCI
 Group: Applications/Life Sciences
 Release:   1
@@ -53,12 +53,10 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ## Install Steps End
 #--------------------------------------
 module load python
-mkdir -p $PWD/lib/python2.7/site-packages
-export PYTHONPATH=$PWD/lib/python2.7/site-packages:$PYTHONPATH
-python setup.py build 
-python setup.py install --prefix $PWD
-chmod a+rx bin/macs2
-cp -R * $RPM_BUILD_ROOT/%{INSTALL_DIR}
+python setup.py install --user
+cp -R /home1/02114/wonaya/.local/lib/python2.7/site-packages/MACS2-%{version}-py2.7-linux-x86_64.egg $RPM_BUILD_ROOT/%{INSTALL_DIR}
+mkdir $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+cp -R /home1/02114/wonaya/.local/bin/macs2 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/macs2
 
 #------------------------------------------------
 # MODULEFILE CREATION
@@ -91,7 +89,6 @@ local macs2_dir = "%{INSTALL_DIR}"
 
 setenv("%{MODULE_VAR}_DIR",	macs2_dir)
 
-prepend_path("PYTHONPATH",		pathJoin(macs2_dir,"lib/python2.7/site-packages"))
 prepend_path("PYTHONPATH",		pathJoin(macs2_dir,""))
 prepend_path("PATH",		pathJoin(macs2_dir,"bin"))
 
