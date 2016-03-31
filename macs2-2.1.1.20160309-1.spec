@@ -53,8 +53,9 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ## Install Steps End
 #--------------------------------------
 module load python
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/python2.7/site-packages/
 python setup.py install --user
-cp -R /home1/02114/wonaya/.local/lib/python2.7/site-packages/MACS2-%{version}-py2.7-linux-x86_64.egg $RPM_BUILD_ROOT/%{INSTALL_DIR}
+cp -R ~/.local/lib/python2.7/site-packages/MACS2-%{version}-py2.7-linux-x86_64.egg $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/python2.7/site-packages/.
 mkdir $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
 cp -R /home1/02114/wonaya/.local/bin/macs2 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/macs2
 
@@ -89,7 +90,7 @@ local macs2_dir = "%{INSTALL_DIR}"
 
 setenv("%{MODULE_VAR}_DIR",	macs2_dir)
 
-prepend_path("PYTHONPATH",		pathJoin(macs2_dir,""))
+prepend_path("PYTHONPATH",		pathJoin(macs2_dir,"lib/python2.7/site-packages/MACS2-%{version}-py2.7-linux-x86_64.egg/"))
 prepend_path("PATH",		pathJoin(macs2_dir,"bin"))
 
 EOF
