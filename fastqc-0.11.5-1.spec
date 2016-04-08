@@ -1,11 +1,11 @@
-%define PNAME macs2
-Summary:    MACS2 peak caller
-Version: 2.1.1.20160309
+%define PNAME fastqc
+Summary:    FastQC - A quality control application for high throughput sequence data
+Version: 0.11.5
 License:    GPL
-URL:        https://github.com/taoliu/MACS/releases
+URL:        http://www.bioinformatics.babraham.ac.uk/projects/fastqc/
 Packager:   TACC - jawon@tacc.utexas.edu
-Source:     https://pypi.python.org/packages/source/M/MACS2/MACS2-2.1.1.20160309.tar.gz
-Vendor:     DFCI
+Source:     http://www.bioinformatics.babraham.ac.uk/projects/fastqc/fastqc_v0.11.5.zip
+Vendor:     Babraham Institute
 Group: Applications/Life Sciences
 Release:   1
 
@@ -19,11 +19,11 @@ Release:   1
 ## directory and name definitions for relocatable RPMs
 %include ./include/name-defines.inc
 
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}MACS2
+%define MODULE_VAR  %{MODULE_VAR_PREFIX}FASTQC
 
 ## PACKAGE DESCRIPTION
 %description
-MACS2 empirically models the length of the sequenced ChIP fragments and uses it to improve the spatial resolution of predicted binding sites
+FastQC is an application which takes a FastQ file and runs a series of tests on it to generate a comprehensive QC report.
 
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
@@ -33,7 +33,7 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 ## SETUP
 #%setup -n %{PNAME}-%{version}
-%setup -n MACS2-%{version}
+%setup -n FastQC
 
 ## BUILD
 %build
@@ -50,14 +50,13 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #--------------------------------------
 ## Install Steps Start
 
+echo "%{PNAME} is being packaged from a vendor-supplied binary distribution"
+
 ## Install Steps End
 #--------------------------------------
-module load python
-python setup.py install --user
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/python2.7/site-packages/
-cp -R ~/.local/lib/python2.7/site-packages/MACS2-%{version}-py2.7-linux-x86_64.egg $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/python2.7/site-packages/.
-mkdir $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
-cp -R /home1/02114/wonaya/.local/bin/macs2 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/macs2
+chmod 755 fastqc
+cp -R ./* $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
 
 #------------------------------------------------
 # MODULEFILE CREATION
@@ -69,29 +68,26 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-This module loads %{PNAME}.
-To call this function, type %{PNAME} on the command line.
-Documentation for %{PNAME} is available online at the publisher website: https://github.com/taoliu/MACS/
-For convenience %{MODULE_VAR}_DIR points to the installation directory. 
-PYTHONPATH has been prepended to include the MACS2 library.
+This module loads %{PNAME} built with %{comp_fam}.
+Documentation for %{PNAME} is available online at http://www.bioinformatics.babraham.ac.uk/projects/fastqc
+The executables are added on to path
 
 Version %{version}
 
 ]])
 
-whatis("Name: ${PNAME}")
+whatis("Name: %{PNAME}")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
-whatis("Keywords: Biology, Genomics, High-throughput Sequencing")
-whatis("Description: MACS2 - Model-based Analysis of ChIP-Seq")
-whatis("URL: https://github.com/taoliu/MACS")
+whatis("Keywords: Biology, Genomics, Sequencing, FastQ, Quality Control")
+whatis("Description: fastqc - A Quality Control application for FastQ files")
+whatis("URL: http://www.bioinformatics.babraham.ac.uk/projects/fastqc")
 
-local macs2_dir = "%{INSTALL_DIR}"
+local fastqc_dir = "%{INSTALL_DIR}"
 
-setenv("%{MODULE_VAR}_DIR",	macs2_dir)
+setenv("%{MODULE_VAR}_DIR",	fastqc_dir)
 
-prepend_path("PYTHONPATH",		pathJoin(macs2_dir,"lib/python2.7/site-packages/MACS2-%{version}-py2.7-linux-x86_64.egg/"))
-prepend_path("PATH",		pathJoin(macs2_dir,"bin"))
+prepend_path("PATH",		fastqc_dir)
 
 EOF
 ## Modulefile End
