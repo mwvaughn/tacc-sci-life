@@ -53,8 +53,11 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 ## Install Steps End
 #--------------------------------------
 module load python
-python setup.py install --user
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/python2.7/site-packages/
+python setup.py install --user
+<<<<<<< HEAD
+=======
+>>>>>>> bed28532d9488df178d198fe2ba6395089ff5d00
 cp -R ~/.local/lib/python2.7/site-packages/MACS2-%{version}-py2.7-linux-x86_64.egg $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib/python2.7/site-packages/.
 mkdir $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
 cp -R /home1/02114/wonaya/.local/bin/macs2 $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/macs2

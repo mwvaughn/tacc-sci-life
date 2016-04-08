@@ -1,10 +1,10 @@
 %define PNAME java
-Version: 1.8.74
+Version: 1.8.77
 Release: 1
 Summary: Java runtime environment
 License: oracle
 Group: Applications/Life Sciences
-Source: /work/03076/gzynda/rpmbuild/SPECS/../SOURCES/jre-8u74-linux-x64.tar.gz
+Source: /work/03076/gzynda/rpmbuild/SPECS/../SOURCES/jre-8u77-linux-x64.tar.gz
 URL: http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
 Packager: TACC - gzynda@tacc.utexas.edu
 
@@ -35,8 +35,7 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 ## SETUP
-#%setup -n jre1.8.0_74
-%setup -n jre1.8.0_74
+%setup -n jre1.8.0_77
 
 ## BUILD
 %build
@@ -89,10 +88,11 @@ prepend_path("PATH",			"%{INSTALL_DIR}/bin")
 prepend_path("LD_LIBRARY_PATH",		"%{INSTALL_DIR}/lib")
 prepend_path("MANPATH",			"%{INSTALL_DIR}/man")
 
-setenv (     "%{MODULE_VAR}_DIR", "%{INSTALL_DIR}")
-setenv (     "%{MODULE_VAR}_BIN", "%{INSTALL_DIR}/bin")
-setenv (     "%{MODULE_VAR}_LIB", "%{INSTALL_DIR}/lib")
-setenv (     "%{MODULE_VAR}_PLUGIN", "%{INSTALL_DIR}/plugin")
+setenv( "%{MODULE_VAR}_DIR",	"%{INSTALL_DIR}")
+setenv( "JAVA_HOME",		"%{INSTALL_DIR}")
+setenv( "%{MODULE_VAR}_BIN",	"%{INSTALL_DIR}/bin")
+setenv( "%{MODULE_VAR}_LIB",	"%{INSTALL_DIR}/lib")
+setenv( "%{MODULE_VAR}_PLUGIN",	"%{INSTALL_DIR}/plugin")
 EOF
 ## Module File End
 #--------------------------------------
