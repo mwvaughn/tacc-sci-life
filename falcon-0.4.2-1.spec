@@ -70,9 +70,11 @@ export PYTHONPATH=${python_site}:${PYTHONPATH}
 mkdir -p ${python_site}
 
 [ -d FALCON-integrate ] && rm -rf FALCON-integrate
-git clone --recursive git@github.com:PacificBiosciences/FALCON-integrate.git
+git clone git@github.com:PacificBiosciences/FALCON-integrate.git
+#git clone --recursive git@github.com:PacificBiosciences/FALCON-integrate.git
 cd FALCON-integrate
 git checkout 4b7d4c95870176193615eb497c01e48f4688899d
+git submodule update --init --recursive
 
 ## Make pypeFLOW
 cd pypeFLOW
@@ -82,43 +84,158 @@ python setup.py install --prefix=${falcon_install}
 
 ## Make FALCON
 cd ${falcon}/FALCON-integrate/FALCON
-# add /dev/shm patch
-patch src/py/bash.py -i - << "EOF"
-123a124
-> sleep 1
-125,126c126,128
-< #rm -f *.C?.las
-< #rm -f *.N?.las
----
-> sleep 1
-> rm -f *.C?.las
-> rm -f *.N?.las
-173a176
->         script.append("function retry { for i in {1..3}; do ( $@ ) && return 0 || sleep 2; done; return 1; }")
-175c178
-<             script.append(line.replace('&&', ';'))
----
->             script.append("retry "+line)
-187c190
-<         pipe = """LA4Falcon -H{length_cutoff} -fso {db_fn} {las_fn} | """
----
->         pipe = """LA4Falcon -H{length_cutoff} -fso /dev/shm/falcon/raw_reads {las_fn} | """
-189c192
-<         pipe = """LA4Falcon -H{length_cutoff}  -fo {db_fn} {las_fn} | """
----
->         pipe = """LA4Falcon -H{length_cutoff}  -fo /dev/shm/falcon/raw_reads {las_fn} | """
-190a194
->     db_prefix = os.path.split(db_fn)[0]
-193a198
-> mkdir /dev/shm/falcon && cp %s/raw_reads.db %s/.raw_reads.bps %s/.raw_reads.idx /dev/shm/falcon/
-195c200,201
-< """ %pipe
----
-> rm -rf /dev/shm/falcon
-> """ % (db_prefix, db_prefix, db_prefix, pipe)
+patch -p1 << "EOF"
+diff --git a/src/py/bash.py b/src/py/bash.py
+index 228fc4d..5b27eea 100644
+--- a/src/py/bash.py
++++ b/src/py/bash.py
+@@ -18,7 +18,7 @@ def make_executable(path):
+     mode |= (mode & 0444) >> 2    # copy R bits to X
+     os.chmod(path, mode)
+
+-def write_script_and_wrapper(script, wrapper_fn, job_done):
++def write_script_and_wrapper(script, wrapper_fn, job_done, tmpdir=""):
+     """
+     Write script to a filename based on wrapper_fn, in same directory.
+     Write wrapper to call it,
+@@ -57,20 +57,24 @@ def write_script_and_wrapper(script, wrapper_fn, job_done):
+         # We are trying to avoid this problem:
+         #   /bin/bash: bad interpreter: Text file busy
+         exe = ''
+-
++    if tmpdir:
++        trap = "trap 'touch {job_exit}; rm {tmpdir}' EXIT"
++    else:
++        trap = "trap 'touch {job_exit}' EXIT"
+     wrapper = """
+ set -vex
+ cd {wdir}
+-trap 'touch {job_exit}' EXIT
++{trap}
+ ls -il {sub_script_bfn}
+ hostname
+ ls -il {sub_script_bfn}
+ time {exe} ./{sub_script_bfn}
+ touch {job_done}
+-"""
++""".format(trap=trap)
+     wrapper = wrapper.format(**locals())
+     with open(wrapper_fn, 'w') as ofs:
+         ofs.write(wrapper)
++    make_executable(os.path.join(wdir, wrapper_fn))
+     return job_done, job_exit
+
+ def script_build_rdb(config, input_fofn_fn, run_jobs_fn):
+@@ -138,13 +142,16 @@ def scripts_daligner(run_jobs_fn, db_prefix, rdb_build_done, pread_aln=False):
+         job_uid = '%04x' %i
+         daligner_cmd = xform_script(bash)
+         bash = """
++function retry {{ for i in {{1..3}}; do ( $@ ) && return 0 || sleep 2; done; return 1; }}
+ db_dir={db_dir}
+ ln -sf ${{db_dir}}/.{db_prefix}.bps .
+ ln -sf ${{db_dir}}/.{db_prefix}.idx .
+ ln -sf ${{db_dir}}/{db_prefix}.db .
++sleep 1
+ {daligner_cmd}
+-#rm -f *.C?.las
+-#rm -f *.N?.las
++sleep 1
++rm -f *.C?.las
++rm -f *.N?.las
+ """.format(db_dir=db_dir, db_prefix=db_prefix, daligner_cmd=daligner_cmd)
+         yield job_uid, bash
+
+@@ -192,28 +199,45 @@ def scripts_merge(config, db_prefix, run_jobs_fn):
+         #merge_script_file = os.path.abspath("%s/m_%05d/m_%05d.sh" %% (wd, p_id, p_id))
+
+         script = []
++        script.append("function retry { for i in {1..3}; do ( $@ ) && return 0 || sleep 2; done; return 1; }")
+         for line in bash_lines:
+-            script.append(line.replace('&&', ';'))
++            script.append("retry %s" %% (line,))
+         script.append("mkdir -p ../las_files")
+         script.append("ln -sf ../m_%05d/%s.%d.las ../las_files" %% (p_id, db_prefix, p_id))
+         script.append("ln -sf ./m_%05d/%s.%d.las .. " %% (p_id, db_prefix, p_id))
+         yield p_id, '\n'.join(script + [''])
+
+-def script_run_consensus(config, db_fn, las_fn, out_file_bfn):
++def script_run_consensus(config, db_fn, las_fn, out_file_bfn, tmpdir=""):
+     """config: falcon_sense_option, length_cutoff
+     """
+     params = dict(config)
+     params.update(locals())
++    ### Section to handle temporary directories
++    db_loc = db_fn
++    c_cmd = ""
++    d_cmd = ""
++    if tmpdir:
++        db_prefix, db_name = os.path.split(db_fn)
++        db_loc = os.path.join(tmpdir, db_name)
++        c_cmd = """
++mkdir {tmpdir}
++cp {db_prefix}/raw_reads.db {db_prefix}/.raw_reads.idx {db_prefix}/.raw_reads.bpx {tmpdir}
++"""
++        d_cmd = "rm -rf {tmpdir}"
++    ### Section for skip
+     if config["falcon_sense_skip_contained"]:
+-        pipe = """LA4Falcon -H{length_cutoff} -fso {db_fn} {las_fn} | """
++        pipe = """LA4Falcon -H{length_cutoff} -fso {db_loc} {las_fn} | """
+     else:
+-        pipe = """LA4Falcon -H{length_cutoff}  -fo {db_fn} {las_fn} | """
++        pipe = """LA4Falcon -H{length_cutoff}  -fo {db_loc} {las_fn} | """
+     pipe += """fc_consensus {falcon_sense_option} >| {out_file_bfn}"""
+-
++    ### Generate main script
+     script = """
+ set -o pipefail
+-%s
+-""" %pipe
++{c_cmd}
++{pipe}
++{d_cmd}
++""".format(c_cmd=c_cmd, pipe=pipe, d_cmd=d_cmd)
++    params['db_loc'] = db_loc
+     return script.format(**params)
+
+ def script_run_falcon_asm(config, las_fofn_fn, preads4falcon_fasta_fn, db_file_fn):
+diff --git a/src/py/functional.py b/src/py/functional.py
+index 020c241..ee8cc13 100644
+--- a/src/py/functional.py
++++ b/src/py/functional.py
+@@ -70,7 +70,8 @@ def get_daligner_job_descriptions(run_jobs_stream, db_prefix):
+     for dali, pairs in dali2pairs.items():
+         sorts = [pair2sort[pair] for pair in sorted(pairs, key=lambda k: (int(k[0]), int(k[1])))]
+         id = tuple(map(int, blocks_dali(dali)))
+-        script = '\n'.join([dali] + sorts) + '\n'
++        sorts = map(lambda x: "retry %s" %% (x), sorts)
++        script = '\n'.join([dali,'sleep 2'] + sorts) + '\n'
+         result[id] = script
+     return result
+
+diff --git a/src/py/run_support.py b/src/py/run_support.py
+index 2bbae32..3d34768 100644
+--- a/src/py/run_support.py
++++ b/src/py/run_support.py
+@@ -9,6 +9,7 @@ import sys
+ import tempfile
+ import time
+ import uuid
++import random
+
+ job_type = None
+ logger = None
+@@ -385,5 +386,8 @@ def run_las_merge(script, job_done, config, script_fn):
+     bash.write_script_and_wrapper(script, script_fn, job_done)
+
+ def run_consensus(db_fn, las_fn, out_file_fn, config, job_done, script_fn):
+-    script = bash.script_run_consensus(config, db_fn, las_fn, os.path.basename(out_file_fn))
+-    bash.write_script_and_wrapper(script, script_fn, job_done)
++    tmpdir=''
++    if config['use_tmpdir']:
++        tmpdir = 'tmp_%06i'%%(int(random.random()*1000))
++    script = bash.script_run_consensus(config, db_fn, las_fn, os.path.basename(out_file_fn), tmpdir)
++    bash.write_script_and_wrapper(script, script_fn, job_done, tmpdir)
 EOF
-# fix dependencies
-sed -i '/setup_requires/d' setup.py
 
 python setup.py install --prefix=${falcon_install}
 
@@ -144,19 +261,30 @@ patch HPCdaligner.c -i - << "EOF"
 >                 printf(" %s.%s.C%d.las",root,root,k);
 >                 printf(" %s.%s.N%d.las",root,root,k);
 EOF
-if [ "%{PLATFORM}" != "ls5" ]
-then
-	# Set the number of pthreads (NTHREADS) to 16 to for Stampede
-	sed -i 's/NTHREADS  4/NTHREADS  16/' filter.h
-	# Set NSHIFT =  log_2(NTHREADS) = 4
-	sed -i 's/NSHIFT    2/NSHIFT    4/' filter.h
-	make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -no-ansi-alias -xHOST"
-else
-	# Use 32 threads on LS5 since HT is on an this code is IO bound.
-	sed -i 's/NTHREADS  4/NTHREADS  32/' filter.h
-	sed -i 's/NSHIFT    2/NSHIFT    5/' filter.h
-	make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -no-ansi-alias -xAVX -axCORE-AVX2"
-fi
+case "%{PLATFORM}" in
+	ls5)
+		# Use 32 threads on LS5 since HT is on an this code is IO bound.
+		sed -i 's/NTHREADS  4/NTHREADS  32/' filter.h
+		sed -i 's/NSHIFT    2/NSHIFT    5/' filter.h
+		make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -no-ansi-alias -xAVX -axCORE-AVX2"
+		;;
+	wrangler)
+		sed -i 's/NTHREADS  4/NTHREADS  8/' filter.h
+		sed -i 's/NSHIFT    2/NSHIFT    3/' filter.h
+		make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -no-ansi-alias -xHOST"
+		;;
+	stampede)
+		# Set the number of pthreads (NTHREADS) to 16 to for Stampede
+		sed -i 's/NTHREADS  4/NTHREADS  16/' filter.h
+		# Set NSHIFT =  log_2(NTHREADS) = 4
+		sed -i 's/NSHIFT    2/NSHIFT    4/' filter.h
+		make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -no-ansi-alias -xHOST"
+		;;
+	*)
+		echo "The system %{PLATFORM} is currently unsupported."
+		exit 1
+		;;
+esac
 cp daligner HPCdaligner HPCmapper LAsort LAmerge LAsplit LAcat LAshow LAcheck daligner_p LA4Falcon DB2Falcon  ${falcon_install}/bin
 
 ## Install Steps End
