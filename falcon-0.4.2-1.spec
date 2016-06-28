@@ -50,14 +50,6 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}	#Delete the build directory
 %include ./include/%{PLATFORM}/system-load.inc
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-if [ "%{PLATFORM}" != "ls5" ]
-then
-        module purge
-        module load TACC
-fi
-module load python
-module load hdf5
-
 export CC=icc
 export ncores=16
 export falcon=`pwd`
@@ -65,6 +57,18 @@ export falcon_install=${RPM_BUILD_ROOT}/%{INSTALL_DIR}
 export python_site=${falcon_install}/lib/python2.7/site-packages
 export PATH=${falcon_install}/bin:${PATH}
 export PYTHONPATH=${python_site}:${PYTHONPATH}
+
+if [ "%{PLATFORM}" != "ls5" ]
+then
+        module purge
+        module load TACC
+	pyINSTALL='python setup.py install --prefix=$(falcon_install}'
+else
+	export PYTHONUSERBASE=${falcon_install}
+	pyINSTALL="pip install -U --user ./"
+fi
+module load python
+module load hdf5
 
 # Make python site-packages path
 mkdir -p ${python_site}
@@ -80,19 +84,20 @@ git submodule update --init --recursive
 cd pypeFLOW
 # have jobs sleep after between submissions so slurm isn't overloaded
 sed -i '/jobsReadyToBeSubmitted.pop(0)/ a \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ time.sleep(2)' src/pypeflow/controller.py
-python setup.py install --prefix=${falcon_install}
+#python setup.py install --prefix=${falcon_install}
+$pyINSTALL
 
 ## Make FALCON
 cd ${falcon}/FALCON-integrate/FALCON
 patch -p1 << "EOF"
 diff --git a/src/py/bash.py b/src/py/bash.py
-index 228fc4d..5b27eea 100644
+index 228fc4d..9e7332a 100644
 --- a/src/py/bash.py
 +++ b/src/py/bash.py
 @@ -18,7 +18,7 @@ def make_executable(path):
      mode |= (mode & 0444) >> 2    # copy R bits to X
      os.chmod(path, mode)
-
+ 
 -def write_script_and_wrapper(script, wrapper_fn, job_done):
 +def write_script_and_wrapper(script, wrapper_fn, job_done, tmpdir=""):
      """
@@ -104,9 +109,10 @@ index 228fc4d..5b27eea 100644
          exe = ''
 -
 +    if tmpdir:
-+        trap = "trap 'touch {job_exit}; rm {tmpdir}' EXIT"
++        trap = "trap 'touch {job_exit}; rm -rf {tmpdir}' EXIT"
 +    else:
 +        trap = "trap 'touch {job_exit}' EXIT"
++    trap = trap.format(**locals())
      wrapper = """
  set -vex
  cd {wdir}
@@ -118,13 +124,13 @@ index 228fc4d..5b27eea 100644
  time {exe} ./{sub_script_bfn}
  touch {job_done}
 -"""
-+""".format(trap=trap)
-     wrapper = wrapper.format(**locals())
+-    wrapper = wrapper.format(**locals())
++""".format(**locals())
      with open(wrapper_fn, 'w') as ofs:
          ofs.write(wrapper)
 +    make_executable(os.path.join(wdir, wrapper_fn))
      return job_done, job_exit
-
+ 
  def script_build_rdb(config, input_fofn_fn, run_jobs_fn):
 @@ -138,13 +142,16 @@ def scripts_daligner(run_jobs_fn, db_prefix, rdb_build_done, pread_aln=False):
          job_uid = '%04x' %i
@@ -144,10 +150,10 @@ index 228fc4d..5b27eea 100644
 +rm -f *.N?.las
  """.format(db_dir=db_dir, db_prefix=db_prefix, daligner_cmd=daligner_cmd)
          yield job_uid, bash
-
+ 
 @@ -192,28 +199,45 @@ def scripts_merge(config, db_prefix, run_jobs_fn):
          #merge_script_file = os.path.abspath("%s/m_%05d/m_%05d.sh" %% (wd, p_id, p_id))
-
+ 
          script = []
 +        script.append("function retry { for i in {1..3}; do ( $@ ) && return 0 || sleep 2; done; return 1; }")
          for line in bash_lines:
@@ -157,7 +163,7 @@ index 228fc4d..5b27eea 100644
          script.append("ln -sf ../m_%05d/%s.%d.las ../las_files" %% (p_id, db_prefix, p_id))
          script.append("ln -sf ./m_%05d/%s.%d.las .. " %% (p_id, db_prefix, p_id))
          yield p_id, '\n'.join(script + [''])
-
+ 
 -def script_run_consensus(config, db_fn, las_fn, out_file_bfn):
 +def script_run_consensus(config, db_fn, las_fn, out_file_bfn, tmpdir=""):
      """config: falcon_sense_option, length_cutoff
@@ -173,9 +179,9 @@ index 228fc4d..5b27eea 100644
 +        db_loc = os.path.join(tmpdir, db_name)
 +        c_cmd = """
 +mkdir {tmpdir}
-+cp {db_prefix}/raw_reads.db {db_prefix}/.raw_reads.idx {db_prefix}/.raw_reads.bpx {tmpdir}
-+"""
-+        d_cmd = "rm -rf {tmpdir}"
++cp {db_prefix}/raw_reads.db {db_prefix}/.raw_reads.idx {db_prefix}/.raw_reads.bps {tmpdir}
++""".format(db_prefix=db_prefix, tmpdir=tmpdir)
++        d_cmd = "rm -rf {tmpdir}".format(tmpdir=tmpdir)
 +    ### Section for skip
      if config["falcon_sense_skip_contained"]:
 -        pipe = """LA4Falcon -H{length_cutoff} -fso {db_fn} {las_fn} | """
@@ -196,7 +202,7 @@ index 228fc4d..5b27eea 100644
 +""".format(c_cmd=c_cmd, pipe=pipe, d_cmd=d_cmd)
 +    params['db_loc'] = db_loc
      return script.format(**params)
-
+ 
  def script_run_falcon_asm(config, las_fofn_fn, preads4falcon_fasta_fn, db_file_fn):
 diff --git a/src/py/functional.py b/src/py/functional.py
 index 020c241..ee8cc13 100644
@@ -211,7 +217,7 @@ index 020c241..ee8cc13 100644
 +        script = '\n'.join([dali,'sleep 2'] + sorts) + '\n'
          result[id] = script
      return result
-
+ 
 diff --git a/src/py/run_support.py b/src/py/run_support.py
 index 2bbae32..3d34768 100644
 --- a/src/py/run_support.py
@@ -221,12 +227,12 @@ index 2bbae32..3d34768 100644
  import time
  import uuid
 +import random
-
+ 
  job_type = None
  logger = None
 @@ -385,5 +386,8 @@ def run_las_merge(script, job_done, config, script_fn):
      bash.write_script_and_wrapper(script, script_fn, job_done)
-
+ 
  def run_consensus(db_fn, las_fn, out_file_fn, config, job_done, script_fn):
 -    script = bash.script_run_consensus(config, db_fn, las_fn, os.path.basename(out_file_fn))
 -    bash.write_script_and_wrapper(script, script_fn, job_done)
@@ -237,7 +243,9 @@ index 2bbae32..3d34768 100644
 +    bash.write_script_and_wrapper(script, script_fn, job_done, tmpdir)
 EOF
 
-python setup.py install --prefix=${falcon_install}
+sed -i '/setup_requires/d' setup.py
+#python setup.py install --prefix=${falcon_install}
+$pyINSTALL
 
 ## Make DAZZ_DB
 cd ${falcon}/FALCON-integrate/DAZZ_DB
@@ -264,8 +272,8 @@ EOF
 case "%{PLATFORM}" in
 	ls5)
 		# Use 32 threads on LS5 since HT is on an this code is IO bound.
-		sed -i 's/NTHREADS  4/NTHREADS  32/' filter.h
-		sed -i 's/NSHIFT    2/NSHIFT    5/' filter.h
+		sed -i 's/NTHREADS  4/NTHREADS  64/' filter.h
+		sed -i 's/NSHIFT    2/NSHIFT    6/' filter.h
 		make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -no-ansi-alias -xAVX -axCORE-AVX2"
 		;;
 	wrangler)

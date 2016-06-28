@@ -1,6 +1,6 @@
 %define PNAME bioperl
 Version: 1.6.923
-Release: 1
+Release: 2
 Summary: BioPerl is a toolkit of perl modules useful in bioinformatics solutions in Perl.
 License: GPL
 Group: Libraries/Life Sciences
@@ -56,10 +56,10 @@ then
 	module load TACC
 fi
 
-module load gcc perl
+module load perl
 
 # Make sure to use cpan to install the build requirements beforehand
-# cpan -i CPAN Module::Build Test::Harness Test::Most URI::Escape
+#cpan -i CPAN Module::Build Test::Harness Test::Most URI::Escape
 
 # make Berkeley DB
 cd db-6.1.26.NC/build_unix
@@ -71,16 +71,18 @@ cd ../../
 # make BioPerl
 BRID=${RPM_BUILD_ROOT}/%{INSTALL_DIR}
 PATH="$BRID/bin${PATH+:}${PATH}"
-PERL5LIB="$BRID/lib/perl5${PERL5LIB+:}${PERL5LIB}"
+PERL5LIB="$BRID/lib/perl5${PERL5LIB+:}/home1/03076/gzynda/perl5/lib/perl5${PERL5LIB+:}${PERL5LIB}"
 PERL_LOCAL_LIB_ROOT="${BRID}{PERL_LOCAL_LIB_ROOT+:}${PERL_LOCAL_LIB_ROOT}"
-PERL_MB_OPT="--install_base \"$BRID\""
+PERL_MB_OPT="--install_base $BRID"
 PERL_MM_OPT="INSTALL_BASE=$BRID"
+export PERL_MB_OPT
+export PERL_MM_OPT
 
 DB_FILE_LIB=${BRID}/lib; export DB_FILE_LIB;
 DB_FILE_INCLUDE=${BRID}/include; export DB_FILE_INCLUDE;
 
 cpan -i IO::String DB_File Data::Stag Scalar::Util ExtUtils::Manifest
-perl Build.PL --install_base $LP
+perl Build.PL --install_base $BRID
 #./Build test
 ./Build install
 #Build installdeps
@@ -129,7 +131,7 @@ setenv(     "%{MODULE_VAR}_BIN", "%{INSTALL_DIR}/bin")
 setenv(     "%{MODULE_VAR}_LIB", "%{INSTALL_DIR}/lib")
 setenv(     "%{MODULE_VAR}_INC", "%{INSTALL_DIR}/include")
 
-prereq("gcc","perl")
+always_load("perl")
 EOF
 
 ## Module File End
