@@ -62,12 +62,12 @@ if [ "%{PLATFORM}" != "ls5" ]
 then
         module purge
         module load TACC
-	pyINSTALL='python setup.py install --prefix=$(falcon_install}'
+	pyINSTALL="python setup.py install --prefix=${falcon_install}"
 else
 	export PYTHONUSERBASE=${falcon_install}
 	pyINSTALL="pip install -U --user ./"
 fi
-module load python
+module load python/2.7.9
 module load hdf5
 
 # Make python site-packages path
@@ -83,8 +83,29 @@ git submodule update --init --recursive
 ## Make pypeFLOW
 cd pypeFLOW
 # have jobs sleep after between submissions so slurm isn't overloaded
-sed -i '/jobsReadyToBeSubmitted.pop(0)/ a \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ time.sleep(2)' src/pypeflow/controller.py
-#python setup.py install --prefix=${falcon_install}
+patch -p1 << "EOF"
+diff --git a/src/pypeflow/controller.py b/src/pypeflow/controller.py
+index b540666..3f396ca 100644
+--- a/src/pypeflow/controller.py
++++ b/src/pypeflow/controller.py
+@@ -676,6 +676,7 @@ class _PypeConcurrentWorkflow(PypeWorkflow):
+                     logger.debug("Submitted %r" %URL)
+                     logger.debug(" Details: %r" %taskObj)
+                     jobsReadyToBeSubmitted.pop(0)
++                    time.sleep(2)
+                 else:
+                     break
+
+@@ -688,7 +689,7 @@ class _PypeConcurrentWorkflow(PypeWorkflow):
+                     self._update( elapsedSeconds )
+                     lastUpdate = datetime.datetime.now( )
+
+-            sleep_time = sleep_time + 0.1 if (sleep_time < 1) else 1
++            sleep_time = sleep_time + 1 if (sleep_time < 5) else 5
+             while not self.messageQueue.empty():
+                 sleep_time = 0 # Wait very briefly while messages are coming in.
+                 URL, message = self.messageQueue.get()
+EOF
 $pyINSTALL
 
 ## Make FALCON
