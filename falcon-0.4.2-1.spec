@@ -58,54 +58,42 @@ export python_site=${falcon_install}/lib/python2.7/site-packages
 export PATH=${falcon_install}/bin:${PATH}
 export PYTHONPATH=${python_site}:${PYTHONPATH}
 
+module load python/2.7.9
+module load hdf5
 if [ "%{PLATFORM}" != "ls5" ]
 then
         module purge
         module load TACC
-	pyINSTALL="python setup.py install --prefix=${falcon_install}"
+	#pyINSTALL="python setup.py install --prefix=${falcon_install}"
+	pyINSTALL="pip install -U --user ./"
 else
 	export PYTHONUSERBASE=${falcon_install}
 	pyINSTALL="pip install -U --user ./"
 fi
-module load python/2.7.9
-module load hdf5
 
 # Make python site-packages path
 mkdir -p ${python_site}
+[ "%{PLATFORM}" == "stampede" ] && easy_install --user pyparsing==1.5.7
 
+TB=$WORK/rpmbuild/SOURCES/falcon.tar.gz
 [ -d FALCON-integrate ] && rm -rf FALCON-integrate
-git clone git@github.com:PacificBiosciences/FALCON-integrate.git
-#git clone --recursive git@github.com:PacificBiosciences/FALCON-integrate.git
-cd FALCON-integrate
-git checkout 4b7d4c95870176193615eb497c01e48f4688899d
-git submodule update --init --recursive
+if [ -e $TB ]
+then
+        tar -xzf $TB
+        cd FALCON-integrate
+else
+        git clone git@github.com:PacificBiosciences/FALCON-integrate.git
+        cd FALCON-integrate
+        git checkout 4b7d4c95870176193615eb497c01e48f4688899d
+        git submodule update --init --recursive
+        cd ..
+        tar -czf $TB FALCON-integrate
+        cd FALCON-integrate
+fi
 
 ## Make pypeFLOW
 cd pypeFLOW
-# have jobs sleep after between submissions so slurm isn't overloaded
-patch -p1 << "EOF"
-diff --git a/src/pypeflow/controller.py b/src/pypeflow/controller.py
-index b540666..3f396ca 100644
---- a/src/pypeflow/controller.py
-+++ b/src/pypeflow/controller.py
-@@ -676,6 +676,7 @@ class _PypeConcurrentWorkflow(PypeWorkflow):
-                     logger.debug("Submitted %r" %URL)
-                     logger.debug(" Details: %r" %taskObj)
-                     jobsReadyToBeSubmitted.pop(0)
-+                    time.sleep(2)
-                 else:
-                     break
-
-@@ -688,7 +689,7 @@ class _PypeConcurrentWorkflow(PypeWorkflow):
-                     self._update( elapsedSeconds )
-                     lastUpdate = datetime.datetime.now( )
-
--            sleep_time = sleep_time + 0.1 if (sleep_time < 1) else 1
-+            sleep_time = sleep_time + 1 if (sleep_time < 5) else 5
-             while not self.messageQueue.empty():
-                 sleep_time = 0 # Wait very briefly while messages are coming in.
-                 URL, message = self.messageQueue.get()
-EOF
+git checkout master
 $pyINSTALL
 
 ## Make FALCON
@@ -251,10 +239,19 @@ index 020c241..ee8cc13 100644
      return result
  
 diff --git a/src/py/mains/run.py b/src/py/mains/run.py
-index e3acd16..79da5a5 100644
+index e3acd16..09e2afe 100644
 --- a/src/py/mains/run.py
 +++ b/src/py/mains/run.py
-@@ -317,19 +317,33 @@ def task_daligner_gather(self):
+@@ -54,7 +54,7 @@ def _run_script_slurm(job_data):
+         sge_option = job_data["sge_option"]
+         with open(script_fn, 'r') as original: data = original.read()
+         with open(script_fn, 'w') as modified: modified.write("#!/bin/sh" + "\n" + data)
+-        sge_cmd="sbatch -J {job_name} {sge_option} {script}".format(job_name=job_name, cwd=os.getcwd(),sge_option=sge_option, script=script_fn)
++        sge_cmd="sbatch -J {job_name} {sge_option} /bin/sh {script}".format(job_name=job_name, cwd=os.getcwd(),sge_option=sge_option, script=script_fn)
+         system(sge_cmd, check=True)
+ 
+ def _run_script_local(job_data):
+@@ -317,19 +317,35 @@ def task_daligner_gather(self):
      fc_run_logger.debug('nblock=%d, out_dir:\n%s'%%(nblock, out_dict))
  
      # Create m_* dirs.
@@ -274,17 +271,22 @@ index e3acd16..79da5a5 100644
 +    tmp = []
 +    tLimit = 30
      for block, las_path in support.daligner_gather_las(job_rundirs):
-             #fc_run_logger.warning('block: %s, las_path: %s' %%(block, las_path))
-             mdir = os.path.join(main_dir, 'm_%05d' %block) # By convention. pbsmrtpipe works differently.
-             las_path = os.path.relpath(las_path, mdir)
+-            #fc_run_logger.warning('block: %s, las_path: %s' %%(block, las_path))
+-            mdir = os.path.join(main_dir, 'm_%05d' %block) # By convention. pbsmrtpipe works differently.
+-            las_path = os.path.relpath(las_path, mdir)
 -            cmd = 'ln -sf {} {}'.format(las_path, mdir)
 -            system(cmd)
-+            newLas = os.path.join(mdir, os.path.basename(las_path))
-+            cmd = '[ -e %s ] || ln -s %s %s'%%(newLas, las_path, mdir)
-+            tmp.append(cmd)
-+            if len(tmp) >= tLimit:
-+                cmds.append('; '.join(tmp))
-+                tmp = []
++        #fc_run_logger.warning('block: %s, las_path: %s' %%(block, las_path))
++        mdir = os.path.join(main_dir, 'm_%05d' %block) # By convention. pbsmrtpipe works differently.
++        las_path = os.path.relpath(las_path, mdir)
++        newLas = os.path.join(mdir, os.path.basename(las_path))
++        cmd = '[ -e %s ] || ln -s %s %s'%%(newLas, las_path, mdir)
++        tmp.append(cmd)
++        if len(tmp) >= tLimit:
++            cmds.append('; '.join(tmp))
++            tmp = []
++    if len(tmp):
++        cmds.append('; '.join(tmp))
 +    res = p.map(system, cmds)
 +    p.close()
 +    p.join()
@@ -292,7 +294,7 @@ index e3acd16..79da5a5 100644
  
  def create_daligner_tasks(run_jobs_fn, wd, db_prefix, rdb_build_done, config, pread_aln=False):
 diff --git a/src/py/run_support.py b/src/py/run_support.py
-index 2bbae32..3d34768 100644
+index 2bbae32..e9c9124 100644
 --- a/src/py/run_support.py
 +++ b/src/py/run_support.py
 @@ -9,6 +9,7 @@ import sys
@@ -303,6 +305,24 @@ index 2bbae32..3d34768 100644
  
  job_type = None
  logger = None
+@@ -258,7 +259,7 @@ level=NOTSET
+ handlers=stream
+ 
+ [logger_pypeflow]
+-level=DEBUG
++level=INFO
+ handlers=file_pypeflow
+ qualname=pypeflow
+ propagate=1
+@@ -277,7 +278,7 @@ args=(sys.stderr,)
+ 
+ [handler_file_pypeflow]
+ class=FileHandler
+-level=DEBUG
++level=INFO
+ formatter=form01
+ args=('pypeflow.log',)
+ 
 @@ -385,5 +386,8 @@ def run_las_merge(script, job_done, config, script_fn):
      bash.write_script_and_wrapper(script, script_fn, job_done)
  
