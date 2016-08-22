@@ -111,6 +111,17 @@ $pyINSTALL
 ## Make FALCON
 cd ${falcon}/FALCON-integrate/FALCON
 patch -p1 << "EOF"
+diff --git a/setup.py b/setup.py
+index 3dd7bf2..f4910fe 100755
+--- a/setup.py
++++ b/setup.py
+@@ -51,6 +51,5 @@ setup(name='falcon_kit',
+       },
+       scripts = scripts,
+       zip_safe = False,
+-      setup_requires=install_requires,
+       install_requires=install_requires
+      )
 diff --git a/src/py/bash.py b/src/py/bash.py
 index 228fc4d..9e7332a 100644
 --- a/src/py/bash.py
@@ -239,6 +250,47 @@ index 020c241..ee8cc13 100644
          result[id] = script
      return result
  
+diff --git a/src/py/mains/run.py b/src/py/mains/run.py
+index e3acd16..79da5a5 100644
+--- a/src/py/mains/run.py
++++ b/src/py/mains/run.py
+@@ -317,19 +317,33 @@ def task_daligner_gather(self):
+     fc_run_logger.debug('nblock=%d, out_dir:\n%s'%%(nblock, out_dict))
+ 
+     # Create m_* dirs.
++    from multiprocessing import Pool
++    p = Pool(processes=48)
++    dirs = []
+     for block in xrange(1, nblock+1):
+         mdir = os.path.join(main_dir, 'm_%05d' %block) # By convention. pbsmrtpipe works differently.
+-        mkdir(mdir)
++        dirs.append(mdir)
++    res = p.map(mkdir, dirs)
+         # TODO: Remove existing symlinks?
+     job_rundirs = [os.path.dirname(fn(dal_done)) for dal_done in out_dict.values()]
+ 
+     # Symlink all daligner *.las.
++    cmds = []
++    tmp = []
++    tLimit = 30
+     for block, las_path in support.daligner_gather_las(job_rundirs):
+             #fc_run_logger.warning('block: %s, las_path: %s' %%(block, las_path))
+             mdir = os.path.join(main_dir, 'm_%05d' %block) # By convention. pbsmrtpipe works differently.
+             las_path = os.path.relpath(las_path, mdir)
+-            cmd = 'ln -sf {} {}'.format(las_path, mdir)
+-            system(cmd)
++            newLas = os.path.join(mdir, os.path.basename(las_path))
++            cmd = '[ -e %s ] || ln -s %s %s'%%(newLas, las_path, mdir)
++            tmp.append(cmd)
++            if len(tmp) >= tLimit:
++                cmds.append('; '.join(tmp))
++                tmp = []
++    res = p.map(system, cmds)
++    p.close()
++    p.join()
+     system("touch %s" %da_done)
+ 
+ def create_daligner_tasks(run_jobs_fn, wd, db_prefix, rdb_build_done, config, pread_aln=False):
 diff --git a/src/py/run_support.py b/src/py/run_support.py
 index 2bbae32..3d34768 100644
 --- a/src/py/run_support.py
