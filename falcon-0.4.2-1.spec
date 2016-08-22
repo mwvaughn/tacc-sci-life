@@ -58,22 +58,17 @@ export python_site=${falcon_install}/lib/python2.7/site-packages
 export PATH=${falcon_install}/bin:${PATH}
 export PYTHONPATH=${python_site}:${PYTHONPATH}
 
+module purge
+module load TACC
 module load python/2.7.9
 module load hdf5
-if [ "%{PLATFORM}" != "ls5" ]
-then
-        module purge
-        module load TACC
-	#pyINSTALL="python setup.py install --prefix=${falcon_install}"
-	pyINSTALL="pip install -U --user ./"
-else
-	export PYTHONUSERBASE=${falcon_install}
-	pyINSTALL="pip install -U --user ./"
-fi
+export PYTHONUSERBASE=${falcon_install}
+#pyINSTALL="python setup.py install --prefix=${falcon_install}"
+pyINSTALL="pip install -U --user ./"
 
 # Make python site-packages path
 mkdir -p ${python_site}
-[ "%{PLATFORM}" == "stampede" ] && easy_install --user pyparsing==1.5.7
+[ "%{PLATFORM}" = "stampede" ] && easy_install --user pyparsing==1.5.7
 
 TB=$WORK/rpmbuild/SOURCES/falcon.tar.gz
 [ -d FALCON-integrate ] && rm -rf FALCON-integrate
