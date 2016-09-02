@@ -60,8 +60,7 @@ export PYTHONPATH=${python_site}:${PYTHONPATH}
 
 module purge
 module load TACC
-module load python/2.7.9
-module load hdf5
+module load python/2.7.9 hdf5
 export PYTHONUSERBASE=${falcon_install}
 #pyINSTALL="python setup.py install --prefix=${falcon_install}"
 pyINSTALL="pip install -U --user ./"
@@ -70,7 +69,7 @@ pyINSTALL="pip install -U --user ./"
 mkdir -p ${python_site}
 [ "%{PLATFORM}" = "stampede" ] && easy_install --user pyparsing==1.5.7
 
-TB=$WORK/rpmbuild/SOURCES/falcon.tar.gz
+TB=/work/03076/gzynda/rpmbuild/SOURCES/falcon.tar.gz
 [ -d FALCON-integrate ] && rm -rf FALCON-integrate
 if [ -e $TB ]
 then
@@ -365,8 +364,8 @@ case "%{PLATFORM}" in
 		make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -no-ansi-alias -xAVX -axCORE-AVX2"
 		;;
 	wrangler)
-		sed -i 's/NTHREADS  4/NTHREADS  8/' filter.h
-		sed -i 's/NSHIFT    2/NSHIFT    3/' filter.h
+		sed -i 's/NTHREADS  4/NTHREADS  16/' filter.h
+		sed -i 's/NSHIFT    2/NSHIFT    4/' filter.h
 		make -j ${ncores} CFLAGS="-O3 -Wall -Wextra -Wno-unused-result -no-ansi-alias -xHOST"
 		;;
 	stampede)
@@ -419,7 +418,7 @@ setenv("FALCON_PREFIX",		"%{INSTALL_DIR}")
 setenv("%{MODULE_VAR}_LIB",	pathJoin("%{INSTALL_DIR}", "lib"))
 setenv("%{MODULE_VAR}_BIN",	pathJoin("%{INSTALL_DIR}", "bin"))
 
-prereq("python","hdf5")
+always_load("python/2.7.9","hdf5")
 EOF
 ## Modulefile End
 #--------------------------------------

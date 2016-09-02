@@ -39,7 +39,7 @@ rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 # Unpack source
-%setup -n %{PNAME}_%{version}
+#%setup -n %{PNAME}_%{version}
 
 #------------------------------------------------
 # BUILD SECTION
@@ -59,15 +59,85 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #------------------------------------------------
 ## Install Steps Start
 
-module swap $TACC_FAMILY_COMPILER gcc
-# CFLAGS='-march=sandybridge -mtune=haswell' CXXFLAGS='-march=sandybridge -mtune=haswell'
-make 'CFLAGS=-openmp -m64 -march=sandybridge -mtune=haswell' 'MAXKMERLENGTH=64' 'LONGSEQUENCES=1' 'CATEGORIES=4' cleanobj zlib obj velveth velvetg
+[ -e velvet ] && rm -rf velvet
+git clone https://github.com/dzerbino/velvet.git
+cd velvet
+git checkout 9adf09f7ded7fedaf6b0e5e4edf9f46602e263d3
+
+[ %{PLATFORM} == "wrangler" ] && export TACC_ICC_LIB=${ICC_LIB}
+
+case %{PLATFORM} in
+"ls5")
+	patch -p1 << "EOF"
+diff --git a/Makefile b/Makefile
+index a4b46e2..d470e6d 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,15 +1,17 @@
+-CC = gcc
++CC = icc
+ CFLAGS = -Wall
+ DEBUG = -g
+ LIBS = -lm
+ OPT = -O3
+-MAXKMERLENGTH?=31
+-CATEGORIES?=2
++IOMP=/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64_lin/
++LDFLAGS="-Wl,-rpath,$(TACC_ICC_LIB)"
++MAXKMERLENGTH?=64
++CATEGORIES?=4
+ DEF = -D MAXKMERLENGTH=$(MAXKMERLENGTH) -D CATEGORIES=$(CATEGORIES)
+ PDFLATEX_VERSION := $(shell pdflatex --version 2> /dev/null)
+ 
+ # Mac OS users: uncomment the following lines
+-CFLAGS = -Wall -m64
++CFLAGS = -Wall -m64 -openmp -xAVX -axCORE-AVX2
+ 
+ # Sparc/Solaris users: uncomment the following line
+ # CFLAGS = -Wall -m64
+EOF
+	;;
+*)
+	patch -p1 << "EOF"
+diff --git a/Makefile b/Makefile
+index a4b46e2..d470e6d 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,15 +1,17 @@
+-CC = gcc
++CC = icc
+ CFLAGS = -Wall
+ DEBUG = -g
+ LIBS = -lm
+ OPT = -O3
+-MAXKMERLENGTH?=31
+-CATEGORIES?=2
++IOMP=/opt/apps/intel/16.0.1.150/compilers_and_libraries_2016.1.150/linux/compiler/lib/intel64_lin/
++LDFLAGS="-Wl,-rpath,$(TACC_ICC_LIB)"
++MAXKMERLENGTH?=64
++CATEGORIES?=4
+ DEF = -D MAXKMERLENGTH=$(MAXKMERLENGTH) -D CATEGORIES=$(CATEGORIES)
+ PDFLATEX_VERSION := $(shell pdflatex --version 2> /dev/null)
+ 
+ # Mac OS users: uncomment the following lines
+-CFLAGS = -Wall -m64
++CFLAGS = -Wall -m64 -openmp -xHOST
+ 
+ # Sparc/Solaris users: uncomment the following line
+ # CFLAGS = -Wall -m64
+EOF
+	;;
+esac
+	
+
+make 'LONGSEQUENCES=1' -j3
 
 ## Install Steps End
 #------------------------------------------------
 
-cp -R ./third-party ./tests ./velvetg ./velveth ./contrib ./data ./Columbus_manual.pdf ./Manual.pdf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
+mkdir $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+cp velvet[gh] $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin
+cp -R tests data Columbus_manual.pdf Manual.pdf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #------------------------------------------------
 # MODULEFILE CREATION
@@ -79,7 +149,7 @@ mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-This module loads %{PNAME} built with gcc and makes available the Velvet assembler
+This module loads %{PNAME} and makes available the Velvet assembler
 Documentation is available online at http://www.ebi.ac.uk/~zerbino/velvet/
 Velvet is configured as such: MAXKMERLENGTH=64 LONGSEQUENCES CATEGORIES=4 OPENMP
 
@@ -94,7 +164,7 @@ whatis("Description: Velvet - Sequence assembler for very short reads")
 whatis("URL: http://www.ebi.ac.uk/~zerbino/velvet/")
 
 setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}/")
-prepend_path("PATH"       ,"%{INSTALL_DIR}/")
+prepend_path("PATH"       ,"%{INSTALL_DIR}/bin")
 
 EOF
 ## Modulefile End
