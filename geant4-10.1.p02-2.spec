@@ -157,7 +157,7 @@ Version %{version}
 
 whatis("Name: %{PNAME}")
 whatis("Version: %{version}")
-whatis("Category: computational biolodgy, simulation")
+whatis("Category: computational biology, simulation")
 whatis("Keywords: Biology, Detector simulation, High energy, Nuclear physics")
 whatis("Description: Geant4 is a toolkit for the simulation of the passage of particles through matter.")
 whatis("URL: http://geant4.web.cern.ch/geant4/")
