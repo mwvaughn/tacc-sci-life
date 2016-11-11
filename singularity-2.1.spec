@@ -6,7 +6,7 @@ Version:  2.1
 Release:  1
 License:  BSD (modified)
 Group:    Applications/Life Sciences
-Source:   singularity-login-2.1.tar.gz
+Source:   singularity-2.1.tar.gz
 Packager: TACC - wallen@tacc.utexas.edu
 Summary:  Open-source software container platform
 
@@ -33,7 +33,7 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 ## SETUP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
-%setup -n %{PNAME}-login-%{version}
+%setup -n %{PNAME}-%{version}
 
 ## BUILD
 %build
@@ -49,7 +49,7 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #--------------------------------------
 # Copy the binaries
-cp singularity $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+ln -s /usr/bin/singularity $RPM_BUILD_ROOT/%{INSTALL_DIR}/singularity
 
 #------------------------------------------------
 # MODULEFILE CREATION
@@ -62,23 +62,17 @@ cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
 
-This Singularity module is only a dummy module designed for the Stampede login
-nodes. Singularity is not installed and should not be run on the login nodes.
-
-A functional Singularity module is available on the compute nodes. Submit
-Singularity job scripts to the queue with 'sbatch'. If you would like to run
-Singularity interactively, please start an interactive session with 'idev'. A
-tutorial for using Singularity on Stampede can be found here:
+This Singularity module is a wrapper for the machine version of Singularity -
+version 2.1 - located only on the compute nodes. Loading this module will keep
+the machine version of Singularity in your path, and will prevent conflicts
+with other versions. A tutorial for using Singularity on Stampede can be found
+here:
 
     https://gist.github.com/eriksf/cc72769e8e8e1e4be991a0a850b97a43
 
-The following Singularity modules are available on Stampede compute nodes:
-
-    singularity/2.1
-
 For any additional help or support visit the Singularity website:
 
-   http://singularity.lbl.gov/
+    http://singularity.lbl.gov/
 
 ]])
 
