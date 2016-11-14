@@ -70,7 +70,7 @@ Singularity job scripts to the queue with 'sbatch'. If you would like to run
 Singularity interactively, please start an interactive session with 'idev'. A
 tutorial for using Singularity on Stampede can be found here:
 
-    https://gist.github.com/eriksf/cc72769e8e8e1e4be991a0a850b97a43
+    https://github.com/TACC/TACC-Singularity
 
 The following Singularity modules are available on Stampede compute nodes:
 
@@ -90,7 +90,7 @@ whatis("Description: Singularity is an open-source software container platform."
 whatis("URL: http://singularity.lbl.gov/")
 
 prepend_path("PATH",                 "%{INSTALL_DIR}")
-setenv(      "%{MODULE_VAR}_DIR",    "%{INSTALL_DIR}/")
+setenv(      "%{MODULE_VAR}_DIR",    "%{INSTALL_DIR}")
 
 EOF
 

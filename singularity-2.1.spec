@@ -68,7 +68,7 @@ the machine version of Singularity in your path, and will prevent conflicts
 with other versions. A tutorial for using Singularity on Stampede can be found
 here:
 
-    https://gist.github.com/eriksf/cc72769e8e8e1e4be991a0a850b97a43
+    https://github.com/TACC/TACC-Singularity
 
 For any additional help or support visit the Singularity website:
 
@@ -84,7 +84,7 @@ whatis("Description: Singularity is an open-source software container platform."
 whatis("URL: http://singularity.lbl.gov/")
 
 prepend_path("PATH",                 "%{INSTALL_DIR}")
-setenv(      "%{MODULE_VAR}_DIR",    "%{INSTALL_DIR}/")
+setenv(      "%{MODULE_VAR}_DIR",    "%{INSTALL_DIR}")
 
 EOF
 
