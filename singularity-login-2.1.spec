@@ -2,11 +2,11 @@
 # INITIAL DEFINITIONS
 #------------------------------------------------
 %define   PNAME singularity
-Version:  0.0
+Version:  2.1
 Release:  1
 License:  BSD (modified)
 Group:    Applications/Life Sciences
-Source:   singularity-0.0.tar.gz
+Source:   singularity-2.1.tar.gz
 Packager: TACC - wallen@tacc.utexas.edu
 Summary:  Open-source software container platform
 
@@ -133,4 +133,14 @@ cd /tmp
 
 # Remove the installation files now that the RPM has been generated
 rm -rf $RPM_BUILD_ROOT
+
+
+# In SPECS dir:
+# ./build_rpm.sh singularity-login-2.1.spec
+#
+# In apps dir: 
+# export RPM_DBPATH=$PWD/db/
+# rpm --dbpath $PWD/db --relocate /opt/apps=$PWD -Uvh --force --nodeps /path/to/rpm/file/rpm_file.rpm
+# sed -i 's?opt/apps?work/03439/wallen/stampede/apps?g' /path/to/modulefiles/package/version.lua
+
 
