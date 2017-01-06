@@ -56,20 +56,23 @@ if [ "%{PLATFORM}" != "ls5" ]
 then
 	module purge
 	module load TACC
+	OPT="-xHOST"
+else
+	OPT="-xAVX -axCORE-AVX2"
 fi
 
 ## Make Samtools
-./configure CC=icc CFLAGS="-O3 -xAVX -axCORE-AVX2" --prefix=%{INSTALL_DIR}
+./configure CC=icc CFLAGS="-O3 $OPT" --prefix=%{INSTALL_DIR}
 make -j 6 DESTDIR=${RPM_BUILD_ROOT} install
 cd ..
 ## Make bcftools
 tar -xjf %{_sourcedir}/bcftools-%{version}.tar.bz2
 cd bcftools-%{version}
-make -j 6 CC=icc CFLAGS="-O3 -xAVX -axCORE-AVX2" prefix=%{INSTALL_DIR} DESTDIR=${RPM_BUILD_ROOT} all install
+make -j 6 CC=icc CFLAGS="-O3 $OPT" prefix=%{INSTALL_DIR} DESTDIR=${RPM_BUILD_ROOT} all install
 cd ..
 ## Make htslib
 tar -xjf %{_sourcedir}/htslib-%{version}.tar.bz2 && cd htslib-%{version}
-./configure CC=icc CFLAGS="-O3 -xAVX -axCORE-AVX2" --prefix=%{INSTALL_DIR}
+./configure CC=icc CFLAGS="-O3 $OPT" --prefix=%{INSTALL_DIR}
 make -j 6 DESTDIR=${RPM_BUILD_ROOT} install
 cd ..
 

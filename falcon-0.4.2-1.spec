@@ -325,7 +325,7 @@ index 2bbae32..e9c9124 100644
 -    bash.write_script_and_wrapper(script, script_fn, job_done)
 +    tmpdir=''
 +    if config['use_tmpdir']:
-+        tmpdir = 'tmp_%06i'%%(int(random.random()*1000))
++        tmpdir = 'tmp_%06i'%%(int(random.random()*1000000))
 +    script = bash.script_run_consensus(config, db_fn, las_fn, os.path.basename(out_file_fn), tmpdir)
 +    bash.write_script_and_wrapper(script, script_fn, job_done, tmpdir)
 EOF

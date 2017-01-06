@@ -2,11 +2,11 @@
 # INITIAL DEFINITIONS
 #------------------------------------------------
 %define PNAME idba
-Version:      1.1.2
+Version:      1.1.3
 Release:      1
 License:      GPL
 Group:        Applications/Life Sciences
-Source:       https://github.com/loneknightpy/idba/releases/download/1.1.2/idba-1.1.2.tar.gz
+Source:       https://github.com/loneknightpy/idba/releases/download/1.1.3/idba-1.1.3.tar.gz
 Packager:     TACC - vaughn@tacc.utexas.edu
 Summary:      Iterative De Bruijn graph de novo assembler for short read sequencing data
 
@@ -50,17 +50,41 @@ mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #--------------------------------------
 ## Install Steps Start
-module swap $TACC_FAMILY_COMPILER gcc
+module purge
+module load TACC
+
+patch bin/Makefile.am -li - << 'EOF'
+39,41c39
+< 	idba_hybrid 
+< 
+< noinst_PROGRAMS = \
+---
+> 	idba_hybrid \
+EOF
 
 aclocal
 autoconf
 automake --add-missing
-#./configure --prefix=%{INSTALL_DIR}
-./configure
+
+[ -z "$ICC_LIB" ] && exit 1
+
+case %{PLATFORM} in
+ls5)
+	./configure CC=icc CXX=icpc CXXFLAGS="-xAVX -axCORE-AVX2" LDFLAGS="-Wl,-rpath,$ICC_LIB" --prefix=%{INSTALL_DIR}
+	;;
+*)	
+	./configure CC=icc CXX=icpc CXXFLAGS="-xHOST" LDFLAGS="-Wl,-rpath,$ICC_LIB" --prefix=%{INSTALL_DIR}
+	;;
+esac
 make clean
-make -j 8 CFLAGS='-march=sandybridge -mtune=haswell' CXXFLAGS='-march=sandybridge -mtune=haswell'
-# Derp. make install is broken at least on Stampede
-make install
+make -j 3 DESTDIR=${RPM_BUILD_ROOT}
+make -j 3 DESTDIR=${RPM_BUILD_ROOT} install
+
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}/script
+for script in `find script -type f -executable`
+do
+	cp $script $RPM_BUILD_ROOT/%{INSTALL_DIR}/script/
+done
 
 ## Install Steps End
 #--------------------------------------

@@ -4,7 +4,7 @@ Version: 2.5.5
 License:    GPL
 URL:        http://www.ncbi.nlm.nih.gov/Traces/sra/sra.cgi?view=software
 Packager:   TACC - jawon@tacc.utexas.edu
-Source:     http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.5.5/sratoolkit.2.5.5-centos_linux64.tar.gz
+Source:     http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.5.5/sratoolkit.2.7.0-centos_linux64.tar.gz
 Vendor:     NCBI
 Group: Applications/Life Sciences
 Release:   1
@@ -33,7 +33,7 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 ## SETUP
 #%setup -n %{PNAME}-%{version}
-%setup -n %{PNAME}.%{version}-centos_linux64
+%setup -n %{PNAME}.2.7.0-centos_linux64
 
 ## BUILD
 %build
