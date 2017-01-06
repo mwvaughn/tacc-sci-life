@@ -1,14 +1,13 @@
-Name: sratoolkit
-Version: 2.5.4
-Release: 1
-License: GPL
-Source: http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/2.5.4/sratoolkit.2.5.4-centos_linux64.tar.gz
-Packager: TACC - gzynda@tacc.utexas.edu
-Summary: The NCBI SRA toolkit
-
-#------------------------------------------------
-# INITIAL DEFINITIONS
-#------------------------------------------------
+%define	  PNAME sratoolkit
+Summary:  The NCBI SRA toolkit
+Version:  2.8.1
+License:  GPL
+URL:      https://github.com/ncbi/sra-tools
+Packager: TACC - jawon@tacc.utexas.edu
+Source:	  http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/%{version}/%{PNAME}.%{version}-centos_linux64.tar.gz
+Vendor:   NCBI
+Group:    Applications/Life Sciences
+Release:  1
 
 ## System Definitions
 %include ./include/system-defines.inc
@@ -21,17 +20,6 @@ Summary: The NCBI SRA toolkit
 %include ./include/name-defines.inc
 
 %define MODULE_VAR  %{MODULE_VAR_PREFIX}SRATOOLKIT
-%define PNAME       sratoolkit
-
-%package %{PACKAGE}
-Summary: The NCBI SRA toolkit
-Group: Applications/Life Sciences
-%description package
-
-%package %{MODULEFILE}
-Summary: The NCBI SRA toolkit
-Group: Applications/Life Sciences
-%description modulefile
 
 ## PACKAGE DESCRIPTION
 %description
@@ -40,13 +28,8 @@ The SRA Toolkit and SDK from NCBI is a collection of tools and libraries for usi
 ## PREP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
 %prep
-%if %{?BUILD_PACKAGE}
-    rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-%endif
-
-%if %{?BUILD_MODULEFILE}
-    rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
-%endif
+rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 ## SETUP
 %setup -n %{PNAME}.%{version}-centos_linux64
@@ -61,45 +44,80 @@ The SRA Toolkit and SDK from NCBI is a collection of tools and libraries for usi
 
 # Start with a clean environment
 %include ./include/%{PLATFORM}/system-load.inc
-
-#--------------------------------------
-%if %{?BUILD_PACKAGE}
-    mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
-    ##### Create TACC Canary Files ########
-    touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
-    ########### Do Not Remove #############
+mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #--------------------------------------
 ## Install Steps Start
-module purge
-module load TACC python
+
+echo "%{PNAME} is being packaged from a vendor-supplied binary distribution"
 
 ## Install Steps End
 #--------------------------------------
 cp -R * $RPM_BUILD_ROOT/%{INSTALL_DIR}
-%endif
-#--------------------------------------
+
+case $TACC_SYSTEM in
+wrangler)
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/scratch_cache << 'EOS'
+#!/bin/bash
+
+# Make ncbi config folder
+[ -e $HOME/.ncbi ] || mkdir $HOME/.ncbi
+
+# Make ncbi cache folder on scratch
+[ -e $DATA/ncbi ] || mkdir $DATA/ncbi
+
+cat > $HOME/.ncbi/user-settings.mkfg << EOF
+/repository/user/main/public/root = "$DATA/ncbi"
+EOF
+
+echo "$DATA/ncbi will now be used to cache sra files"
+EOS
+;;
+*)
+cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/scratch_cache << 'EOS'
+#!/bin/bash
+
+# Make ncbi config folder
+[ -e $HOME/.ncbi ] || mkdir $HOME/.ncbi
+
+# Make ncbi cache folder on scratch
+[ -e $SCRATCH/ncbi ] || mkdir $SCRATCH/ncbi
+
+cat > $HOME/.ncbi/user-settings.mkfg << EOF
+/repository/user/main/public/root = "$SCRATCH/ncbi"
+EOF
+
+echo "$SCRATCH/ncbi will now be used to cache sra files"
+EOS
+;;
+esac
+chmod +x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/scratch_cache
 
 #------------------------------------------------
 # MODULEFILE CREATION
 #------------------------------------------------
-%if %{?BUILD_MODULEFILE}
-    mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
-    ##### Create TACC Canary Files ########
-    touch $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
-    ########### Do Not Remove #############
+mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
 
-#--------------------------------------
+#------------------------------------------------
 ## Modulefile Start
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
 help (
 [[
-The %{PNAME} module file defines the following environment variables:
-%{MODULE_VAR}_DIR for the location of the %{name}
-distribution. Documentation can be found online at https://github.com/ncbi/sra-tools/wiki
+The SRA Toolkit module file defines the following environment variables:
+
+%{MODULE_VAR}_DIR - location of the %{PNAME} distribution
+%{MODULE_VAR}_EXAMPLE - example files
+
+To improve download speed, the prefetch command has been aliased to always
+use aspera. We also suggest running
+
+$ scratch_cache
+
+to change your cache directory to use the scratch filesystem.
+
+Documentation can be found online at https://github.com/ncbi/sra-tools/wiki
 
 Version %{version}
-
 ]])
 
 whatis("Name: sratools")
@@ -107,15 +125,16 @@ whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
 whatis("Keywords: archive, ncbi, utility, genomics")
 whatis("Description: The SRA Toolkit and SDK from NCBI is a collection of tools and libraries for using data in the INSDC Sequence Read Archives.")
-whatis("URL: https://github.com/ncbi/sra-tools")
+whatis("URL: %{url}")
 
 local sra_dir = "%{INSTALL_DIR}"
 
 setenv("%{MODULE_VAR}_DIR",	sra_dir)
-setenv("%{MODULE_VAR}_EXAMPLES",	pathJoin(sra_dir,"examples"))
+setenv("%{MODULE_VAR}_EXAMPLE",	pathJoin(sra_dir,"example"))
 
 prepend_path("PATH",		pathJoin(sra_dir,"bin"))
-
+set_alias("prefetch","prefetch -a \"$TACC_ASPERA_ASCP|$TACC_ASPERA_KEY\"")
+always_load("aspera-connect")
 EOF
 ## Modulefile End
 #--------------------------------------
@@ -125,41 +144,27 @@ if [ -f $SPEC_DIR/checkModuleSyntax ]; then
     $SPEC_DIR/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
 fi
 
-##  VERSION FILE
+## VERSION FILE
 cat > $RPM_BUILD_ROOT%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{name}-%{version}
+## version file for %{PNAME}-%{version}
 ##
 
 set     ModulesVersion      "%{version}"
 EOF
 
-%endif
-#--------------------------------------
-
 #------------------------------------------------
 # FILES SECTION
 #------------------------------------------------
-%if %{?BUILD_PACKAGE}
-%files %{PACKAGE}
+#%files -n %{name}-%{comp_fam_ver}
+%files
 %defattr(-,root,install,)
 %{INSTALL_DIR}
-%endif # ?BUILD_PACKAGE
-
-%if %{?BUILD_MODULEFILE}
-%files %{MODULEFILE}
-%defattr(-,root,install,)
 %{MODULE_DIR}
-%endif # ?BUILD_MODULEFILE
 
-## POST 
-%post %{PACKAGE}
-export PACKAGE_POST=1
-%include include/post-defines.inc
-%post %{MODULEFILE}
-export MODULEFILE_POST=1
-%include include/post-defines.inc
+## POST
+%post
 
 ## CLEAN UP
 %clean
@@ -168,4 +173,3 @@ cd /tmp
 
 # Remove the installation files now that the RPM has been generated
 rm -rf $RPM_BUILD_ROOT
-

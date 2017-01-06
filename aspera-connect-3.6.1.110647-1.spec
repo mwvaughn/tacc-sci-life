@@ -102,7 +102,7 @@ whatis("URL: http://asperasoft.com/software/transfer-clients/")
 
 setenv("%{MODULE_VAR}_DIR",	"%{INSTALL_DIR}/bin")
 setenv("%{MODULE_VAR}_ASCP",	"%{INSTALL_DIR}/bin/ascp")
-setenv("%{MODULE_VAR}_OPENSSH",	"%{INSTALL_DIR}/etc/asperaweb_id_dsa.openssh")
+setenv("%{MODULE_VAR}_KEY",	"%{INSTALL_DIR}/etc/asperaweb_id_dsa.openssh")
 
 prepend_path("PATH",		"%{INSTALL_DIR}/bin")
 prepend_path("LD_LIBRARY_PATH",	"%{INSTALL_DIR}/lib")
