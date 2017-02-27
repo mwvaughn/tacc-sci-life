@@ -50,11 +50,20 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}	#Delete the build directory
 %include ./include/%{PLATFORM}/system-load.inc
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
+case %{PLATFORM} in
+wrangler)
+	pyv="python/2.7.9"
+	;;
+*)
+	pyv="python/2.7.12"
+	;;
+esac
+
 # Load dependencies
 module purge
 module load TACC
 module use ~/apps/modulefiles
-module load python/2.7.9 hdf5 pbcore
+module load $pyv hdf5 pbcore
 module load boost
 
 # Set up env

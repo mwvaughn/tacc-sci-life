@@ -1,5 +1,5 @@
 %define		PNAME	pbalign
-Version:	0.2.0
+Version:	0.3.0
 Release:	1
 License:	BSD
 URL:		https://github.com/PacificBiosciences/pbalign
@@ -49,30 +49,38 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}	#Delete the build directory
 # Start with a clean environment
 %include ./include/%{PLATFORM}/system-load.inc
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+module purge
+module load TACC
+
+commit=2dd2df2b89138833d4fb61e325057effc8fa0565
+
+# Set up python paths
 BI=$RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-if [ "%{PLATFORM}" != "ls5" ]
-then
-        module purge
-        module load TACC
-fi
-module use ~/apps/modulefiles
-module load python/2.7.9 hdf5 pbcore
-
-# Clone the repo
-[ -d %{PNAME} ] && rm -rf %{PNAME}
-git clone git@github.com:PacificBiosciences/%{PNAME}.git
-cd %{PNAME}
-git checkout 36fbc25cea18786a311684af29b75ee055979472
-
-BI=${RPM_BUILD_ROOT}/%{INSTALL_DIR}
 PP=${BI}/lib/python2.7/site-packages
-#export PYTHONUSERBASE=${BI}
 mkdir -p $PP
-export PYTHONPATH=${PP}:$PYTHONPATH
+export PYTHONUSERBASE=${BI}
 
-python setup.py install --prefix $BI
-#pip install -U --user ./
+case %{PLATFORM} in
+wrangler)
+	module use $WORK/public/apps/modulefiles
+	pyv="python/2.7.9"
+	export PYTHONPATH=${PP}:$PYTHONPATH
+	export HDF5_DIR=$TACC_HDF5_DIR
+	pyINSTALL="pip install --user"
+	$pyINSTALL h5py
+	;;
+*)
+	module use $WORK/ls5/public/apps/modulefiles
+	pyv="python/2.7.12"
+	module load $pyv hdf5
+	export PYTHONPATH=${PP}:$PYTHONPATH
+	export HDF5_DIR=$TACC_HDF5_DIR
+	pyINSTALL="pip -v --trusted-host pypi.python.org install --user"
+	;;
+esac
+module load $pyv hdf5 pbcore
+$pyINSTALL git+https://github.com/PacificBiosciences/%{PNAME}.git@${commit}
 
 ## Install Steps End
 #--------------------------------------
@@ -84,7 +92,7 @@ python setup.py install --prefix $BI
 #--------------------------------------
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help (
 [[
 The %{PNAME} module file defines the following environment variables:
@@ -115,7 +123,7 @@ setenv("%{MODULE_VAR}_DIR",     "%{INSTALL_DIR}")
 setenv("%{MODULE_VAR}_LIB",	pathJoin("%{INSTALL_DIR}", "lib"))
 setenv("%{MODULE_VAR}_BIN",	pathJoin("%{INSTALL_DIR}", "bin"))
 
-always_load("python","pbcore","blasr")
+always_load("${pyv}","pbcore","blasr","samtools/1.3")
 EOF
 ## Modulefile End
 #--------------------------------------

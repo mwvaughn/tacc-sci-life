@@ -1,0 +1,95 @@
+#!/bin/bash
+
+function askInput {
+	read -r -p "[Y/n] " response
+	if [[ ! $response =~ ^([Yy]es|[Yy])$ ]]; then
+		exit
+	fi
+}
+
+systemCmds=""
+#systemList=(wrangler)
+systemList=(staff.stampede wrangler staff.ls5)
+#systemList=(staff.stampede wrangler)
+
+for spec in $@
+do
+	for system in ${systemList[@]}
+	do
+		rpm=""
+		address=${system}.tacc.utexas.edu
+		if [ "$HOSTNAME" == "${address}" ]
+		then
+			rpm=`[ -e $spec ] && rpmbuild -bb $spec | tee /dev/tty | grep "^Wrote:" | cut -f 2 -d " "`
+			rpm=${rpm%}
+			echo $rpm
+			[ -z $rpm ] && exit 1
+			rpmName=`basename $rpm`
+			case "$system" in
+				staff.stampede)
+					rpmDir=/admin/build/admin/rpms/stampede/RPMS/x86_64
+					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+					askInput
+					sudo su root -c "ssh build cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system"
+					;;
+				wrangler)
+					rpmDir=/admin/build/rpms/RPMS/x86_64
+					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+					askInput
+					ssh -t master bash -c "sudo su root -c cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system"
+					;;
+				staff.ls5)
+					rpmDir=/opt/apps/build/blocks/admin/rpms/RPMS/x86_64/08_lsci
+					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+					askInput
+					sudo su root -c "cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system"
+					;;
+				*)
+					echo "No rules for ${system}. Exiting."; exit 1
+					;;
+			esac
+		else
+			rpm=`ssh -t ${address} bash -c "'
+cd $PWD && [ -e ${spec} ] && rpmbuild -bb ${spec}
+'" | tee /dev/tty | grep "^Wrote:" | cut -f 2 -d " "`
+			rpm=${rpm%}
+			echo $rpm
+			[ -z $rpm ] && exit 1
+			rpmName=`basename $rpm`
+			case "$system" in
+				staff.stampede)
+					rpmDir=/admin/build/admin/rpms/stampede/RPMS/x86_64
+					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+					askInput
+					ssh -t $address bash -c "'
+sudo su root -c \"ssh build cp ${rpm} ${rpmDir}/ && echo Done || echo Install failed on $system\"
+'"
+					;;
+				wrangler)
+					rpmDir=/admin/build/rpms/RPMS/x86_64
+					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+					askInput
+					ssh -t master.${address} bash -c "'
+sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
+'"
+					;;
+				staff.ls5)
+					rpmDir=/opt/apps/build/blocks/admin/rpms/RPMS/x86_64/08_lsci
+					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+					askInput
+					ssh -t $address bash -c "'
+sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
+'"
+					;;
+				*)
+					echo "No rules for ${system}. Exiting."; exit 1
+					;;
+			esac
+		fi
+		systemCmds+="${system}: rpm -ivh --nodeps ${rpmDir}/${rpmName}\n"
+	done
+done
+
+echo -e $systemCmds | sort
+
+exit 0

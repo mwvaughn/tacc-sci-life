@@ -72,7 +72,8 @@ rm $RPM_BUILD_ROOT/%{INSTALL_DIR}/etc/asperaconnect.path
 rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/var
 rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/res
 rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/localization
-
+# comes with a libc that breaks things
+rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
 
 #------------------------------------------------
 # MODULEFILE CREATION
@@ -105,7 +106,6 @@ setenv("%{MODULE_VAR}_ASCP",	"%{INSTALL_DIR}/bin/ascp")
 setenv("%{MODULE_VAR}_KEY",	"%{INSTALL_DIR}/etc/asperaweb_id_dsa.openssh")
 
 prepend_path("PATH",		"%{INSTALL_DIR}/bin")
-prepend_path("LD_LIBRARY_PATH",	"%{INSTALL_DIR}/lib")
 
 EOF
 ## Modulefile End

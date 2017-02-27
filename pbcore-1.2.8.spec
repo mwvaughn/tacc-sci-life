@@ -53,25 +53,32 @@ BI=$RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 module purge
 module load TACC
-module load python/2.7.9 hdf5
 
-export HDF5_DIR=$TACC_HDF5_DIR
+commit=282f0d93bf898f02dadf7809f04f170ad9aec011
 
-# Clone the repo
-[ -d %{PNAME} ] && rm -rf %{PNAME}
-git clone git@github.com:PacificBiosciences/%{PNAME}.git
-cd %{PNAME}
-git checkout 282f0d93bf898f02dadf7809f04f170ad9aec011
-
-BI=${RPM_BUILD_ROOT}/%{INSTALL_DIR}
+# Set up python paths
 PP=${BI}/lib/python2.7/site-packages
-#export PYTHONUSERBASE=${BI}
 mkdir -p $PP
-export PYTHONPATH=${PP}:$PYTHONPATH
+export PYTHONUSERBASE=${BI}
 
-easy_install --prefix $BI h5py
-python setup.py install --prefix $BI
-#pip install -U --user ./
+case %{PLATFORM} in
+wrangler)
+	pyv="python/2.7.9"
+	module load $pyv hdf5
+	export HDF5_DIR=$TACC_HDF5_DIR
+	pyINSTALL="pip install --user"
+	$pyINSTALL h5py
+	;;
+*)
+	pyv="python/2.7.12"
+	module load $pyv hdf5
+	export HDF5_DIR=$TACC_HDF5_DIR
+	export PYTHONPATH=${PP}:$PYTHONPATH
+	pyINSTALL="pip -v --trusted-host pypi.python.org install --user"
+	;;
+esac
+
+$pyINSTALL git+https://github.com/PacificBiosciences/%{PNAME}.git@${commit}
 
 ## Install Steps End
 #--------------------------------------
@@ -83,7 +90,7 @@ python setup.py install --prefix $BI
 #--------------------------------------
 mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
   
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << EOF
 help (
 [[
 The %{PNAME} module file defines the following environment variables:
@@ -108,14 +115,14 @@ whatis("URL: %{URL}")
 
 prepend_path("PATH",		pathJoin("%{INSTALL_DIR}", "bin"))
 prepend_path("LD_LIBRARY_PATH",	pathJoin("%{INSTALL_DIR}", "lib"))
-prepend_path("LD_LIBRARY_PATH",	pathJoin("/opt/apps/intel15/hdf5/1.8.14/x86_64/lib"))
+--prepend_path("LD_LIBRARY_PATH",	pathJoin("${TACC_HDF5_LIB}"))
 prepend_path("PYTHONPATH",	pathJoin("%{INSTALL_DIR}", "lib/python2.7/site-packages"))
 
 setenv("%{MODULE_VAR}_DIR",     "%{INSTALL_DIR}")
 setenv("%{MODULE_VAR}_LIB",	pathJoin("%{INSTALL_DIR}", "lib"))
 setenv("%{MODULE_VAR}_BIN",	pathJoin("%{INSTALL_DIR}", "bin"))
 
-always_load("python")
+always_load("${pyv}","hdf5")
 EOF
 ## Modulefile End
 #--------------------------------------
