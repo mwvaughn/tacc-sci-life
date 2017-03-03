@@ -1,6 +1,3 @@
-# -*-rpm-spec-*-
-#
-# $Id$
 #
 #-----------------------------------------
 # Load Desired MPI Stack for RPM Builds
