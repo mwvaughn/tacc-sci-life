@@ -9,7 +9,7 @@ function askInput {
 
 systemCmds=""
 #systemList=(wrangler)
-systemList=(staff.stampede wrangler staff.ls5)
+systemList=(staff.stampede wrangler staff.ls5 login1-knl.stampede staff.hikari)
 #systemList=(staff.stampede wrangler)
 
 for spec in $@
@@ -38,8 +38,20 @@ do
 					askInput
 					ssh -t master bash -c "sudo su root -c cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system"
 					;;
+				staff.hikari)
+					rpmDir=/admin/build/rpms/hikari/RPMS/x86_64/08_lsci
+					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+					askInput
+					sudo su root -c "ssh build cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system"
+					;;
 				staff.ls5)
 					rpmDir=/opt/apps/build/blocks/admin/rpms/RPMS/x86_64/08_lsci
+					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+					askInput
+					sudo su root -c "cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system"
+					;;
+				login1-knl.stampede)
+					rpmDir=/home1/build/rpms/knl15/RPMS/x86_64
 					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
 					askInput
 					sudo su root -c "cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system"
@@ -73,6 +85,14 @@ sudo su root -c \"ssh build cp ${rpm} ${rpmDir}/ && echo Done || echo Install fa
 sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
 '"
 					;;
+				staff.hikari)
+					rpmDir=/admin/build/rpms/hikari/RPMS/x86_64/08_lsci
+					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+					askInput
+					ssh -t $address bash -c "'
+sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
+'"
+					;;
 				staff.ls5)
 					rpmDir=/opt/apps/build/blocks/admin/rpms/RPMS/x86_64/08_lsci
 					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
@@ -80,6 +100,12 @@ sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $sys
 					ssh -t $address bash -c "'
 sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
 '"
+					;;
+				login1-knl.stampede)
+					rpmDir=/home1/build/rpms/knl15/RPMS/x86_64
+					askInput
+					ssh -t $address bash -c "'
+sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
 					;;
 				*)
 					echo "No rules for ${system}. Exiting."; exit 1

@@ -1,8 +1,10 @@
+#!/usr/bin/env python
+
 import subprocess as sp
 import argparse
 
-parser = argparse.ArgumentParser(description='Print all biology modules.')
-parser.add_argument('-S', metavar='LIST', type=str, help='Systems to query [%(default)s]', default='stampede,ls5,wrangler')
+parser = argparse.ArgumentParser(description='Tabulate all modules with the "biology" keyword.')
+parser.add_argument('-S', metavar='LIST', type=str, help='Systems to query [%(default)s]', default='stampede,ls5,wrangler,login-knl1.stampede,hikari')
 parser.add_argument('-O', metavar='TYPE', type=str, help='Output format ([csv], tab, pretty)', default='csv')
 args = parser.parse_args()
 
