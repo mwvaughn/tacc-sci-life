@@ -59,6 +59,10 @@ module purge
 module load TACC
 
 case %{PLATFORM} in
+stampedeknl)
+	make CC=icc CFLAGS="-xCORE-AVX2 -axMIC-AVX512 -O3" LDFLAGS="-Wl,-rpath,$ICC_LIB" PREFIX=${RPM_BUILD_ROOT}/%{INSTALL_DIR}
+	#make CC=icc CFLAGS="-xCORE-AVX2 -axMIC-AVX512 -O3" LDFLAGS="-Wl,-rpath,$ICC_LIB" PREFIX=${RPM_BUILD_ROOT}/%{INSTALL_DIR} lib
+	;;
 ls5)
 	make CC=icc CFLAGS="-xAVX -axCORE-AVX2 -O3" LDFLAGS="-Wl,-rpath,$ICC_LIB" PREFIX=${RPM_BUILD_ROOT}/%{INSTALL_DIR}
 	#make CC=icc CFLAGS="-xAVX -axCORE-AVX2 -O3" LDFLAGS="-Wl,-rpath,$ICC_LIB" PREFIX=${RPM_BUILD_ROOT}/%{INSTALL_DIR} lib

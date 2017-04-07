@@ -9,7 +9,7 @@ function askInput {
 
 systemCmds=""
 #systemList=(wrangler)
-systemList=(staff.stampede wrangler staff.ls5 login1-knl.stampede staff.hikari)
+systemList=(staff.stampede wrangler staff.ls5 login-knl1.stampede staff.hikari)
 #systemList=(staff.stampede wrangler)
 
 for spec in $@
@@ -18,100 +18,58 @@ do
 	do
 		rpm=""
 		address=${system}.tacc.utexas.edu
-		if [ "$HOSTNAME" == "${address}" ]
-		then
-			rpm=`[ -e $spec ] && rpmbuild -bb $spec | tee /dev/tty | grep "^Wrote:" | cut -f 2 -d " "`
-			rpm=${rpm%}
-			echo $rpm
-			[ -z $rpm ] && exit 1
-			rpmName=`basename $rpm`
-			case "$system" in
-				staff.stampede)
-					rpmDir=/admin/build/admin/rpms/stampede/RPMS/x86_64
-					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
-					askInput
-					sudo su root -c "ssh build cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system"
-					;;
-				wrangler)
-					rpmDir=/admin/build/rpms/RPMS/x86_64
-					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
-					askInput
-					ssh -t master bash -c "sudo su root -c cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system"
-					;;
-				staff.hikari)
-					rpmDir=/admin/build/rpms/hikari/RPMS/x86_64/08_lsci
-					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
-					askInput
-					sudo su root -c "ssh build cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system"
-					;;
-				staff.ls5)
-					rpmDir=/opt/apps/build/blocks/admin/rpms/RPMS/x86_64/08_lsci
-					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
-					askInput
-					sudo su root -c "cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system"
-					;;
-				login1-knl.stampede)
-					rpmDir=/home1/build/rpms/knl15/RPMS/x86_64
-					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
-					askInput
-					sudo su root -c "cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system"
-					;;
-				*)
-					echo "No rules for ${system}. Exiting."; exit 1
-					;;
-			esac
-		else
-			rpm=`ssh -t ${address} bash -c "'
+		rpm=`ssh -t ${address} bash -c "'
 cd $PWD && [ -e ${spec} ] && rpmbuild -bb ${spec}
 '" | tee /dev/tty | grep "^Wrote:" | cut -f 2 -d " "`
-			rpm=${rpm%}
-			echo $rpm
-			[ -z $rpm ] && exit 1
-			rpmName=`basename $rpm`
-			case "$system" in
-				staff.stampede)
-					rpmDir=/admin/build/admin/rpms/stampede/RPMS/x86_64
-					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
-					askInput
-					ssh -t $address bash -c "'
+		rpm=${rpm%}
+		echo $rpm
+		[ -z $rpm ] && exit 1
+		rpmName=`basename $rpm`
+		case "$system" in
+			staff.stampede)
+				rpmDir=/admin/build/admin/rpms/stampede/RPMS/x86_64
+				echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+				askInput
+				ssh -t $address bash -c "'
 sudo su root -c \"ssh build cp ${rpm} ${rpmDir}/ && echo Done || echo Install failed on $system\"
 '"
-					;;
-				wrangler)
-					rpmDir=/admin/build/rpms/RPMS/x86_64
-					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
-					askInput
-					ssh -t master.${address} bash -c "'
+				;;
+			wrangler)
+				rpmDir=/admin/build/rpms/RPMS/x86_64
+				echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+				askInput
+				ssh -t master.${address} bash -c "'
 sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
 '"
-					;;
-				staff.hikari)
-					rpmDir=/admin/build/rpms/hikari/RPMS/x86_64/08_lsci
-					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
-					askInput
-					ssh -t $address bash -c "'
+				;;
+			staff.hikari)
+				rpmDir=/admin/build/rpms/hikari/RPMS/x86_64/08_lsci
+				echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+				askInput
+				ssh -t $address bash -c "'
+cp ${rpm} /tmp/ && sudo su root -c \"cp /tmp/$(basename $rpm) ${rpmDir}/ && echo Done || echo Install failed on $system\"; rm -i /tmp/$(basename $rpm)
+'"
+				;;
+			staff.ls5)
+				rpmDir=/opt/apps/build/blocks/admin/rpms/RPMS/x86_64/08_lsci
+				echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+				askInput
+				ssh -t $address bash -c "'
 sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
 '"
-					;;
-				staff.ls5)
-					rpmDir=/opt/apps/build/blocks/admin/rpms/RPMS/x86_64/08_lsci
-					echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
-					askInput
-					ssh -t $address bash -c "'
-sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
+				;;
+			login-knl1.stampede)
+				rpmDir=/home1/build/rpms/knl15/RPMS/x86_64
+				echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
+				askInput
+				ssh -t staff.stampede bash -c "'
+sudo su root -c \"cp ${rpm} ${rpmDir}/ && echo Done || echo Install failed on $system\"
 '"
-					;;
-				login1-knl.stampede)
-					rpmDir=/home1/build/rpms/knl15/RPMS/x86_64
-					askInput
-					ssh -t $address bash -c "'
-sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
-					;;
-				*)
-					echo "No rules for ${system}. Exiting."; exit 1
-					;;
-			esac
-		fi
+				;;
+			*)
+				echo "No rules for ${system}. Exiting."; exit 1
+				;;
+		esac
 		systemCmds+="${system}: rpm -ivh --nodeps ${rpmDir}/${rpmName}\n"
 	done
 done
