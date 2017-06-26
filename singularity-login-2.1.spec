@@ -6,7 +6,7 @@ Version:  2.1
 Release:  1
 License:  BSD (modified)
 Group:    Applications/Life Sciences
-Source:   singularity-2.1.tar.gz
+#Source:   singularity-2.1.tar.gz
 Packager: TACC - wallen@tacc.utexas.edu
 Summary:  Open-source software container platform
 
@@ -33,7 +33,7 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 
 ## SETUP
 # Use -n <name> if source file different from <name>-<version>.tar.gz
-%setup -n %{PNAME}-%{version}
+#%setup -n %{PNAME}-%{version}
 
 ## BUILD
 %build
@@ -48,8 +48,36 @@ rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
 mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #--------------------------------------
-# Copy the binaries
-cp singularity $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+# Make the warning binary
+cat << 'EOF' > $RPM_BUILD_ROOT/%{INSTALL_DIR}/singularity 
+#!/bin/bash
+#
+# This is a dummy Singularity executable for the stampede login nodes. It
+# prints usage information, and directs users to idev / a github tutorial.
+#
+echo "
+================================================================================
+
+ Please do not run Singularity on the Stampede login nodes! Instead, submit 
+ Singularity job scripts to the queue with 'sbatch'. If you would like to run
+ Singularity interactively, please start an interactive session with 'idev'. A
+ tutorial for using Singularity on Stampede can be found here:
+
+     https://github.com/TACC/TACC-Singularity
+
+ The following Singularity modules are available on Stampede compute nodes:
+
+     singularity/2.1
+
+ For any additional help or support visit the Singularity website:
+
+    http://singularity.lbl.gov/
+
+================================================================================
+"
+exit 0
+EOF
+chmod a+rx $RPM_BUILD_ROOT/%{INSTALL_DIR}/singularity 
 
 #------------------------------------------------
 # MODULEFILE CREATION
@@ -72,9 +100,9 @@ tutorial for using Singularity on Stampede can be found here:
 
     https://github.com/TACC/TACC-Singularity
 
-The following Singularity modules are available on Stampede compute nodes:
+The following Singularity modules are available on %{PLATFORM} compute nodes:
 
-    singularity/2.1
+    %{PNAME}/%{version}
 
 For any additional help or support visit the Singularity website:
 
@@ -133,14 +161,3 @@ cd /tmp
 
 # Remove the installation files now that the RPM has been generated
 rm -rf $RPM_BUILD_ROOT
-
-
-# In SPECS dir:
-# ./build_rpm.sh singularity-login-2.1.spec
-#
-# In apps dir: 
-# export RPM_DBPATH=$PWD/db/
-# rpm --dbpath $PWD/db --relocate /opt/apps=$PWD -Uvh --force --nodeps /path/to/rpm/file/rpm_file.rpm
-# sed -i 's?opt/apps?work/03439/wallen/stampede/apps?g' /path/to/modulefiles/package/version.lua
-
-

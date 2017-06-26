@@ -74,6 +74,8 @@ wrangler)
 stampedeknl)
         pyv="python/2.7.13"
         ;;
+hikari)
+        pyv="python/2.7.11"
 *)
         pyv="python/2.7.12"
         ;;

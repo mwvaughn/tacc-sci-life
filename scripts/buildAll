@@ -31,7 +31,7 @@ cd $PWD && [ -e ${spec} ] && rpmbuild -bb ${spec}
 				echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
 				askInput
 				ssh -t $address bash -c "'
-sudo su root -c \"ssh build cp ${rpm} ${rpmDir}/ && echo Done || echo Install failed on $system\"
+sudo su - -c \"cp ${rpm} ${rpmDir}/ && echo Done || echo Install failed on $system\"
 '"
 				;;
 			wrangler)
@@ -39,7 +39,7 @@ sudo su root -c \"ssh build cp ${rpm} ${rpmDir}/ && echo Done || echo Install fa
 				echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
 				askInput
 				ssh -t master.${address} bash -c "'
-sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
+sudo su - -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
 '"
 				;;
 			staff.hikari)
@@ -47,7 +47,7 @@ sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $sys
 				echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
 				askInput
 				ssh -t $address bash -c "'
-cp ${rpm} /tmp/ && sudo su root -c \"cp /tmp/$(basename $rpm) ${rpmDir}/ && echo Done || echo Install failed on $system\"; rm -i /tmp/$(basename $rpm)
+cp ${rpm} /tmp/ && sudo su - -c \"cp /tmp/$(basename $rpm) ${rpmDir}/ && echo Done || echo Install failed on $system\"; rm -i /tmp/$(basename $rpm)
 '"
 				;;
 			staff.ls5)
@@ -55,7 +55,7 @@ cp ${rpm} /tmp/ && sudo su root -c \"cp /tmp/$(basename $rpm) ${rpmDir}/ && echo
 				echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
 				askInput
 				ssh -t $address bash -c "'
-sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
+sudo su - -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
 '"
 				;;
 			login-knl1.stampede)
@@ -63,7 +63,7 @@ sudo su root -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $sys
 				echo -e "Move:\n - ${rpm}\nto\n - ${rpmDir}?"
 				askInput
 				ssh -t staff.stampede bash -c "'
-sudo su root -c \"cp ${rpm} ${rpmDir}/ && echo Done || echo Install failed on $system\"
+sudo su - -c \"cp ${rpm} ${rpmDir}/ && echo Done || echo Install failed on $system\"
 '"
 				;;
 			*)

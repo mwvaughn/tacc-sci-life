@@ -47,7 +47,7 @@
   %define comp_fam_ver intel17
   %define comp_fam_name Intel
   %define is_intel 1
-  %define comp_module intel/17.0.0
+  %define comp_module intel/17.0.4
 %endif
 
 %if "%{comp_fam}" == "error"
@@ -55,4 +55,9 @@
   exit
 %endif
 
-
+%if "%{comp_fam}" == "gcc"
+  %define TACC_OPT -march=broadwell -mtune=knl
+%endif
+%if "%{comp_fam}" == "intel"
+  %define TACC_OPT -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512
+%endif
