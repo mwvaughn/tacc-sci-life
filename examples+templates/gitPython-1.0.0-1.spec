@@ -23,7 +23,7 @@ Summary:	Tools to process and analyze deep sequencing data.
 
 #%define MODULE_VAR      %{MODULE_VAR_PREFIX}LZ4
 # This was changed to automatically reflect PNAME
-%define MODULE_VAR      %{MODULE_VAR_PREFIX}%(t=%{PNAME}; echo ${t^^})
+%define MODULE_VAR      %{MODULE_VAR_PREFIX}%(echo "%{PNAME}" | tr [:lower:] [:upper:])
 
 ## PACKAGE DESCRIPTION
 %description

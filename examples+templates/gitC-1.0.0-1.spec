@@ -23,7 +23,7 @@ Summary:	LZ4 is a fast compression algorithm
 
 #%define MODULE_VAR      %{MODULE_VAR_PREFIX}LZ4
 # This was changed to automatically reflect PNAME
-%define MODULE_VAR      %{MODULE_VAR_PREFIX}%(t=%{PNAME}; echo ${t^^})
+%define MODULE_VAR      %{MODULE_VAR_PREFIX}%(echo "%{PNAME}" | tr [:lower:] [:upper:])
 
 ## PACKAGE DESCRIPTION
 %description
