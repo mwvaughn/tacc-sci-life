@@ -3,6 +3,17 @@
 # Load Desired Compiler for RPM Builds
 #-----------------------------------------
 
+if [ -f "$BASH_ENV" ]; then
+  . $BASH_ENV
+  module purge
+  clearMT
+  MP="/opt/apps/tools/modulefiles:/opt/apps/modulefiles"
+
+  if [ -z "$MODULEPATH" ]; then
+    export MODULEPATH=$(/opt/apps/lmod/lmod/libexec/addto --append MODULEPATH ${MP//:/ })
+  fi
+fi
+
 %if %{undefined comp_fam}
   %define comp_fam error
 %endif

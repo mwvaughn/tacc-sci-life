@@ -1,11 +1,8 @@
+# Support for the lmod system in tacc_world
 if [ -f "$BASH_ENV" ]; then
   . $BASH_ENV
-fi
-
-if [ -n "$MODULEPATH" ]; then
-  module --quiet purge
+  module purge
   clearMT
+  export MODULEPATH=/opt/apps/tools/modulefiles:/opt/apps/modulefiles:/opt/modulefiles
+  module load TACC
 fi
-
-export MODULEPATH=/opt/apps/xsede/modulefiles:/opt/apps/teragrid/modulefiles:/opt/apps/modulefiles:/opt/modulefiles
-module load TACC
