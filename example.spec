@@ -16,7 +16,7 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-%define shortsummary ""
+%define shortsummary This is a short summary
 Summary: %{shortsummary}
 
 # Give the package a base name
@@ -166,14 +166,14 @@ make DESTDIR=$RPM_BUILD_ROOT -j 4 install
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message = [[
-The %{PNAME} module file defines the following environment variables:
+The %{pkg_base_name} module file defines the following environment variables:
 
  - %{MODULE_VAR}_DIR
  - %{MODULE_VAR}_BIN
  - %{MODULE_VAR}_LIB
  - %{MODULE_VAR}_INC
 
-for the location of the %{PNAME} distribution.
+for the location of the %{pkg_base_name} distribution.
 
 Documentation: %{url}
 

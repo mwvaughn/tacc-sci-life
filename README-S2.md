@@ -91,7 +91,7 @@ example.spec                                                    zlib-1.2.8-1.spe
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x8	# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x8
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64	# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-%define shortsummary ""					      |	%define shortsummary "A Massively Spiffy Yet Delicately Unobt
+%define shortsummary This is a short summary		      |	%define shortsummary A Massively Spiffy Yet Delicately Unobtrusive Compression Library
 Summary: %{shortsummary}					Summary: %{shortsummary}
 
 # Give the package a base name					# Give the package a base name
@@ -252,14 +252,14 @@ make DESTDIR=$RPM_BUILD_ROOT -j 4 install		      |	make DESTDIR=${RPM_BUILD_ROOT
 # Write out the modulefile associated with the application	# Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EO	cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EO
 local help_message = [[						local help_message = [[
-The %{PNAME} module file defines the following environment va	The %{PNAME} module file defines the following environment va
+The %{pkg_base_name} module file defines the following enviro	The %{pkg_base_name} module file defines the following environment va
 
  - %{MODULE_VAR}_DIR						 - %{MODULE_VAR}_DIR
  - %{MODULE_VAR}_BIN					      <
  - %{MODULE_VAR}_LIB						 - %{MODULE_VAR}_LIB
  - %{MODULE_VAR}_INC						 - %{MODULE_VAR}_INC
 
-for the location of the %{PNAME} distribution.			for the location of the %{PNAME} distribution.
+for the location of the %{pkg_base_name} distribution.		for the location of the %{pkg_base_name} distribution.
 
 							      >	For static linking on Linux* OS, 
 							      >
@@ -358,3 +358,88 @@ export PACKAGE_PREUN=1						export PACKAGE_PREUN=1
 rm -rf $RPM_BUILD_ROOT						rm -rf $RPM_BUILD_ROOT
 ```
 ### Compiling the RPMs
+
+To take advantage of `compiler-defines.inc`, we need to use the `build_rpm.sh` script and also specify which compiler to use.
+While this will restrict your module to only loading with a specific compiler environment, it also means much less work writing system-specific compiler arguments. 
+Since we will be compiling on Stampede2, we should use the latest version of the Intel compiler.
+
+```
+$ build_rpm.sh -i17 zlib-1.2.8-1.spec
+```
+
+If all goes well, you should be left with two RPMS:
+
+- The RPM that contains all LMOD module files
+  - tacc-zlib-1.2.8-modulefile-1.2.8-1.x86_64.rpm
+- The RPM that contains all program files
+  - tacc-zlib-1.2.8-package-1.2.8-1.x86_64.rpm
+
+## Testing the RPM
+
+Now that you have functional RPMs, you can test them by installing them locally using the `scripts/myRpmInstall` script. Use it as follows:
+
+```
+scripts/myRpmInstall <install directory> <module RPM> <package RPM>
+```
+
+We can install our zlib RPMs as follows
+
+```
+$ mkdir -p $WORK/public/apps
+$ scripts/myRpmInstall $WORK/public/apps ../stampede2/RPMS/x86_64/tacc-zlib-1.2.8-modulefile-1.2.8-1.x86_64.rpm ../stampede2/RPMS/x86_64/tacc-zlib-1.2.8-package-1.2.8-1.x86_64.rpm
+Installing RPMs
+WARN: Modulefile RPM was installed while using non-standard RPM database location.
+WARN: Package RPM is being installed while using non-standard RPM database location.
+WARN: You're off the map! Good luck, friend.
+INSTALLED! - ignore the warnings
+Checking the $MODULEPATH variable.
+looks like the $MODULEPATH environment variable needs updating.
+Check the README.md file if you aren't sure how to do that.
+```
+
+The warnings look a little scary, but this is a successful installation. Update your module path to include the new location and then load the zlib module.
+
+```
+staff.stampede2(102)$ ml use $WORK/public/apps/intel17/modulefiles
+staff.stampede2(103)$ ml zlib
+staff.stampede2(104)$ ml show zlib
+--------------------------------------------------------------------------------------------------------------
+   /work/03076/gzynda/stampede2/public/apps/intel17/modulefiles/zlib/1.2.8.lua:
+--------------------------------------------------------------------------------------------------------------
+help([[The zlib module file defines the following environment variables:
+
+ - TACC_ZLIB_DIR
+ - TACC_ZLIB_LIB
+ - TACC_ZLIB_INC
+
+for the location of the zlib distribution.
+
+For static linking on Linux* OS,
+
+  gcc -O3 -o zpipe_ipp.out zpipe.c -I$TACC_ZLIB_INC $TACC_ZLIB_LIB/libz.a
+
+For static linking on Linux* OS,
+
+  gcc -O3 -o zpipe_ipp.out zpipe.c -I$TACC_ZLIB_INC -L$TACC_ZLIB_LIB -lz
+
+Documentation: http://zlib.net
+
+Version 1.2.8
+]], [[
+]])
+whatis("Name: tacc-zlib-1.2.8-intel17")
+whatis("Version: 1.2.8")
+whatis("Category: applications, compression")
+whatis("Keywords: compressino, deflate")
+whatis("Description: A Massively Spiffy Yet Delicately Unobtrusive Compression Library")
+whatis("URL: http://zlib.net")
+prepend_path("PATH","/work/03076/gzynda/stampede2/public/apps/intel17/zlib/1.2.8/bin")
+prepend_path("LD_LIBRARY_PATH","/work/03076/gzynda/stampede2/public/apps/intel17/zlib/1.2.8/lib")
+prepend_path("MANPATH","/work/03076/gzynda/stampede2/public/apps/intel17/zlib/1.2.8/share/man")
+setenv("TACC_ZLIB_DIR","/work/03076/gzynda/stampede2/public/apps/intel17/zlib/1.2.8")
+setenv("TACC_ZLIB_BIN","/work/03076/gzynda/stampede2/public/apps/intel17/zlib/1.2.8/bin")
+setenv("TACC_ZLIB_LIB","/work/03076/gzynda/stampede2/public/apps/intel17/zlib/1.2.8/lib")
+setenv("TACC_ZLIB_INC","/work/03076/gzynda/stampede2/public/apps/intel17/zlib/1.2.8/include")
+```
+
+Done! You can now submit a collab ticket for the RPMs to be installed.

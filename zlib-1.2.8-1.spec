@@ -16,7 +16,7 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-%define shortsummary "A Massively Spiffy Yet Delicately Unobtrusive Compression Library"
+%define shortsummary A Massively Spiffy Yet Delicately Unobtrusive Compression Library
 Summary: %{shortsummary}
 
 # Give the package a base name
@@ -177,13 +177,13 @@ make DESTDIR=${RPM_BUILD_ROOT} install
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message = [[
-The %{PNAME} module file defines the following environment variables:
+The %{pkg_base_name} module file defines the following environment variables:
 
  - %{MODULE_VAR}_DIR
  - %{MODULE_VAR}_LIB
  - %{MODULE_VAR}_INC
 
-for the location of the %{PNAME} distribution.
+for the location of the %{pkg_base_name} distribution.
 
 For static linking on Linux* OS, 
 
