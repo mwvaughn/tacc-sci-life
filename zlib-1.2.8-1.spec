@@ -16,7 +16,8 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Massively Spiffy Yet Delicately Unobtrusive Compression Librar
+%define shortsummary "A Massively Spiffy Yet Delicately Unobtrusive Compression Library"
+Summary: %{shortsummary}
 
 # Give the package a base name
 %define pkg_base_name zlib
@@ -30,10 +31,10 @@ Summary: A Massively Spiffy Yet Delicately Unobtrusive Compression Librar
 
 ### Toggle On/Off ###
 %include ./include/system-defines.inc
+%include ./include/%{PLATFORM}/name-defines.inc
 %include ./include/%{PLATFORM}/rpm-dir.inc                  
 %include ./include/%{PLATFORM}/compiler-defines.inc
 #%include ./include/%{PLATFORM}/mpi-defines.inc
-%include ./include/%{PLATFORM}/name-defines.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -41,12 +42,11 @@ Summary: A Massively Spiffy Yet Delicately Unobtrusive Compression Librar
 ############ Do Not Change #############
 Name:      %{pkg_name}
 Version:   %{pkg_version}
-#BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1
 License:   BSD
-Group:     Applications, Libraries
+Group:     Libraries
 URL:       http://zlib.net
 Packager:  TACC - gzynda@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
@@ -57,19 +57,19 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary:   A Massively Spiffy Yet Delicately Unobtrusive Compression Library
-Group:     Applications, Libraries
+Summary: %{shortsummary}
+Group:   Libraries
 %description package
-zlib: A Massively Spiffy Yet Delicately Unobtrusive Compression Library
+%{name}: %{shortsummary}
 
 %package %{MODULEFILE}
-Summary:   A Massively Spiffy Yet Delicately Unobtrusive Compression Library
-Group: Lmod/Modulefiles
+Summary: The modulefile RPM
+Group:   Lmod/Modulefiles
 %description modulefile
-zlib: A Massively Spiffy Yet Delicately Unobtrusive Compression Library
+Module file for %{name}
 
 %description
-zlib: A Massively Spiffy Yet Delicately Unobtrusive Compression Library
+%{name}: %{shortsummary}
 
 #---------------------------------------
 %prep
@@ -107,16 +107,16 @@ zlib: A Massively Spiffy Yet Delicately Unobtrusive Compression Library
 
 # Setup modules
 %include ./include/%{PLATFORM}/system-load.inc
-
-# Insert necessary module commands
 ##################################
 # If using build_rpm
-module purge
+##################################
 %include ./include/%{PLATFORM}/compiler-load.inc
 #%include ./include/%{PLATFORM}/mpi-load.inc
 #%include ./include/%{PLATFORM}/mpi-env-vars.inc
-# If not
-# module load modules
+##################################
+# Manually load modules
+##################################
+# module load
 ##################################
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -187,7 +187,7 @@ for the location of the %{PNAME} distribution.
 
 For static linking on Linux* OS, 
 
-  gcc -O3 -o zpipe_ipp.out zpipe.c -I$%{MODULE_VAR}_INC $%{MODULE_VAR}_LIB/libz.a
+  gcc -O3 -o zpipe_ipp.out zpipe.c -I$IPPROOT/include -I$%{MODULE_VAR}_INC $%{MODULE_VAR}_LIB/libz.a $IPPROOT/lib/intel64/libipp{dc,s,core}.a
 
 For static linking on Linux* OS, 
 
@@ -204,15 +204,13 @@ whatis("Name: %{name}")
 whatis("Version: %{version}")
 whatis("Category: applications, compression")
 whatis("Keywords: compressino, deflate")
-whatis("Description: A Massively Spiffy Yet Delicately Unobtrusive Compression Library")
+whatis("Description: %{shortsummary}")
 whatis("URL: %{url}")
 
-prepend_path("PATH",		"%{INSTALL_DIR}/bin")
 prepend_path("LD_LIBRARY_PATH",	"%{INSTALL_DIR}/lib")
 prepend_path("MANPATH",		"%{INSTALL_DIR}/share/man")
 
 setenv("%{MODULE_VAR}_DIR",     "%{INSTALL_DIR}")
-setenv("%{MODULE_VAR}_BIN",	"%{INSTALL_DIR}/bin")
 setenv("%{MODULE_VAR}_LIB",	"%{INSTALL_DIR}/lib")
 setenv("%{MODULE_VAR}_INC",	"%{INSTALL_DIR}/include")
 EOF

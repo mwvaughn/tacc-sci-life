@@ -12,9 +12,9 @@ Workflow
 For an idea of how module building and testing works, let's take a look at Bowtie 2.2.4.  Login to a TACC system, and try this:
 
 ```
-$ cd $WORK
+$ cd $STOCKYARD
 $ mkdir rpmbuild && cd rpmbuild
-$ git clone https://github.com/mwvaughn/tacc-sci-life.git SPECS
+$ git clone https://github.com/TACC/lifesci_spec.git SPECS
 Cloning into 'SPECS'...
 remote: Counting objects: 1568, done.
 remote: Total 1568 (delta 0), reused 0 (delta 0)

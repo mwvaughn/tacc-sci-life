@@ -70,7 +70,7 @@ baseDir=${baseDir}/rpmbuild
 [ -d $baseDir/SOURCES ] || mkdir -p $baseDir/SOURCES
 
 echo "Creating rpmbuild heirarchy in the ${baseDir} directory."
-for systemName in hikari ls5 ls4 stampede2 stampede maverick wrangler; do
+for systemName in hikari ls5 stampede2 stampede maverick wrangler; do
     # Make system folder
     if [ ! -d $baseDir/$systemName ]; then
         echo "creating $systemName directory"

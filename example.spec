@@ -1,5 +1,5 @@
 #
-# Greg Zynda
+# Name
 # 2017-08-01
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
@@ -16,24 +16,25 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-Summary: A Nice little relocatable skeleton spec file example.
+%define shortsummary ""
+Summary: %{shortsummary}
 
 # Give the package a base name
 %define pkg_base_name example
 
 # Create some macros (spec file variables)
-%define major_version 6
-%define minor_version 6
-%define patch_version 0
+%define major_version 1
+%define minor_version 1
+%define patch_version 1
 
 %define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
 ### Toggle On/Off ###
 %include ./include/system-defines.inc
-%include ./include/%{platform}/name-defines.inc
-%include ./include/%{platform}/rpm-dir.inc                  
-%include ./include/%{platform}/compiler-defines.inc
-%include ./include/%{platform}/mpi-defines.inc
+%include ./include/%{PLATFORM}/name-defines.inc
+%include ./include/%{PLATFORM}/rpm-dir.inc                  
+%include ./include/%{PLATFORM}/compiler-defines.inc
+%include ./include/%{PLATFORM}/mpi-defines.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
@@ -41,14 +42,13 @@ Summary: A Nice little relocatable skeleton spec file example.
 ############ Do Not Change #############
 Name:      %{pkg_name}
 Version:   %{pkg_version}
-BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1
 License:   BSD
-Group:     Applications
+Group:     Applications/Life Sciences
 URL:       https://github.com/TACC/lifesci_spec
-Packager:  TACC - gzynda@tacc.utexas.edu
+Packager:  TACC - email@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 # Turn off debug package mode
@@ -57,19 +57,19 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 
 %package %{PACKAGE}
-Summary: The package RPM
-Group: Applications
+Summary: %{shortsummary}
+Group:   Applications/Life Sciences
 %description package
-This is the long description for the package RPM...
+%{name}: %{shortsummary}
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Group:   Lmod/Modulefiles
 %description modulefile
-This is the long description for the modulefile RPM...
+Module file for %{name}
 
 %description
-Please edit this description
+%{name}: %{shortsummary}
 
 #---------------------------------------
 %prep
@@ -107,16 +107,16 @@ Please edit this description
 
 # Setup modules
 %include ./include/%{PLATFORM}/system-load.inc
-
-# Insert necessary module commands
 ##################################
 # If using build_rpm
-module purge
-%include compiler-load.inc
-#%include mpi-load.inc
-#%include mpi-env-vars.inc
-# If not
-# module load modules
+##################################
+%include ./include/%{PLATFORM}/compiler-load.inc
+%include ./include/%{PLATFORM}/mpi-load.inc
+%include ./include/%{PLATFORM}/mpi-env-vars.inc
+##################################
+# Manually load modules
+##################################
+# module load
 ##################################
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -186,7 +186,7 @@ whatis("Name: %{name}")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
 whatis("Keywords: Biology, Genomics")
-whatis("Description: short description")
+whatis("Description: %{shortsummary}")
 whatis("URL: %{url}")
 
 prepend_path("PATH",		"%{INSTALL_DIR}/bin")
@@ -209,7 +209,7 @@ set     ModulesVersion      "%{version}"
 EOF
   
   # Check the syntax of the generated lua modulefile
-  %{SPEC_DIR}/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
+  %{SPEC_DIR}/scripts/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
 #--------------------------
 %endif # BUILD_MODULEFILE |
@@ -248,11 +248,11 @@ EOF
 %post %{PACKAGE}
 export PACKAGE_POST=1
 %include ./include/%{PLATFORM}/post-defines.inc
-# $RPM_INSTALL_PREFIX0 /tmpmod -> /opt/apps
-# $RPM_INSTALL_PREFIX1 /tmprpm -> /opt/apps
-
 %post %{MODULEFILE}
 export MODULEFILE_POST=1
+%include ./include/%{PLATFORM}/post-defines.inc
+%preun %{PACKAGE}
+export PACKAGE_PREUN=1
 %include ./include/%{PLATFORM}/post-defines.inc
 ########################################
 ############ Do Not Remove #############
@@ -262,4 +262,3 @@ export MODULEFILE_POST=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
-
