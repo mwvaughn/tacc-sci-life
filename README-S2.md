@@ -72,12 +72,12 @@ Open new spec file in the text editor of your choice and make the following chan
 
 <table>
 <thead><tr>
-	<td>example.spec</td><td>zlib-1.2.8-1.spec</td>
+	<th>example.spec</th><th>zlib-1.2.8-1.spec</th>
 </tr></thead>
 <tbody><tr>
 <td>
-```
-#
+<pre><code>
+"#
 # Name
 # 2017-08-01
 #
@@ -340,12 +340,12 @@ export PACKAGE_PREUN=1
 #---------------------------------------
 %clean
 #---------------------------------------
-rm -rf $RPM_BUILD_ROOT
-```
+rm -rf $RPM_BUILD_ROOT"
+</code></pre>
 </td>
 <td>
-<pre lang="no-highlight"><code>
-  #
+<pre><code>
+"  #
 | # Greg Zynda
   # 2017-08-01
   #
@@ -628,7 +628,7 @@ rm -rf $RPM_BUILD_ROOT
   #---------------------------------------
   %clean
   #---------------------------------------
-  rm -rf $RPM_BUILD_ROOT
+  rm -rf $RPM_BUILD_ROOT"
 </code></pre>
 </td>
 </tr></tbody>
