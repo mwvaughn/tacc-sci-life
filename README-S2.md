@@ -76,7 +76,7 @@ Open new spec file in the text editor of your choice and make the following chan
 </tr></thead>
 <tbody><tr>
 <td>
-```
+<pre lang="no-highlight"><code>
 #
 # Name
 # 2017-08-01
@@ -341,10 +341,10 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
-```
+</code></pre>
 </td>
 <td>
-```
+<pre lang="no-highlight"><code>
   #
 | # Greg Zynda
   # 2017-08-01
@@ -629,7 +629,7 @@ rm -rf $RPM_BUILD_ROOT
   %clean
   #---------------------------------------
   rm -rf $RPM_BUILD_ROOT
-```
+</code></pre>
 </td>
 </tr></tbody>
 </table>
