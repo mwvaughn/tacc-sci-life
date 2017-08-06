@@ -16,18 +16,18 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-%define shortsummary A Massively Spiffy Yet Delicately Unobtrusive Compression Library
+%define shortsummary Tools (written in C using htslib) for manipulating next-generation sequencing data
 Summary: %{shortsummary}
 
 # Give the package a base name
-%define pkg_base_name zlib
+%define pkg_base_name samtools
 
 # Create some macros (spec file variables)
 %define major_version 1
-%define minor_version 2
-%define patch_version 8
+%define minor_version 5
+#%define patch_version 0
 
-%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
+%define pkg_version %{major_version}.%{minor_version}
 
 ### Toggle On/Off ###
 %include ./include/system-defines.inc
@@ -42,14 +42,15 @@ Summary: %{shortsummary}
 ############ Do Not Change #############
 Name:      %{pkg_name}
 Version:   %{pkg_version}
+BuildRoot: /var/tmp/%{pkg_name}-%{pkg_version}-buildroot
 ########################################
 
 Release:   1
-License:   BSD
-Group:     Libraries
-URL:       http://zlib.net
+License:   MIT
+Group:     Applications/Life Sciences
+URL:       https://github.com/samtools/samtools
 Packager:  TACC - gzynda@tacc.utexas.edu
-Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+Source:    samtools-%{pkg_version}.tar.bz2
 
 # Turn off debug package mode
 %define debug_package %{nil}
@@ -58,13 +59,13 @@ Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
 %package %{PACKAGE}
 Summary: %{shortsummary}
-Group:   Libraries
+Group: Applications/Life Sciences
 %description package
-%{name}: %{shortsummary}
+%{shortsummary}
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
-Group:   Lmod/Modulefiles
+Group: Lmod/Modulefiles
 %description modulefile
 Module file for %{name}
 
@@ -94,7 +95,7 @@ Module file for %{name}
 #--------------------------
 
 # Comment this out if pulling from git
-%setup -n %{pkg_base_name}-%{pkg_version}
+%setup -n samtools-%{pkg_version}
 
 #---------------------------------------
 %build
@@ -107,16 +108,19 @@ Module file for %{name}
 
 # Setup modules
 %include ./include/%{PLATFORM}/system-load.inc
+
 ##################################
 # If using build_rpm
 ##################################
+module purge
 %include ./include/%{PLATFORM}/compiler-load.inc
 #%include ./include/%{PLATFORM}/mpi-load.inc
 #%include ./include/%{PLATFORM}/mpi-env-vars.inc
 ##################################
 # Manually load modules
 ##################################
-# module load
+#module use $WORK/public/apps/intel17/modulefiles
+#module load zlib/1.2.8
 ##################################
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -140,21 +144,21 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-# Source IPP
-tar -xzf $IPPROOT/examples/components_and_examples_lin_ps.tgz ./components/interfaces/ipp_zlib/zlib-1.2.8.patch
-source /opt/intel/compilers_and_libraries_2017.4.196/linux/ipp/bin/ippvars.sh intel64
+OPT="-O3 %{TACC_OPT}"
 
-# Patch zlib
-patch -p1 < components/interfaces/ipp_zlib/zlib-%{version}.patch
+## Make Samtools and HTSLIB
+./configure CFLAGS="${OPT}" --prefix=%{INSTALL_DIR}
+make -j5 DESTDIR=${RPM_BUILD_ROOT} all all-htslib
+make DESTDIR=${RPM_BUILD_ROOT} install install-htslib
+cd ..
 
-# Compile zlib
-source /opt/intel/compilers_and_libraries_2017.4.196/linux/bin/compilervars.sh intel64
-export CFLAGS="-O3 %{TACC_OPT} -fPIC -m64 -DWITH_IPP -I$IPPROOT/include"
-export LDFLAGS="$IPPROOT/lib/intel64/libippdc.a $IPPROOT/lib/intel64/libipps.a $IPPROOT/lib/intel64/libippcore.a"
-#sed -i -e 's~\$(AR) \$(ARFLAGS) \$@ \$(OBJS)~\$(AR) \$(ARFLAGS) \$@ \$(OBJS) ${IPPROOT}/lib/intel64/libippdc.a ${IPPROOT}/lib/intel64/libipps.a ${IPPROOT}/lib/intel64/libippcore.a~' Makefile.in
-./configure --prefix=%{INSTALL_DIR}
-make -j3 shared
-make DESTDIR=${RPM_BUILD_ROOT} install
+## Make bcftools
+tar -xjf %{_sourcedir}/bcftools-%{version}.tar.bz2
+cd bcftools-%{version} && rm -rf htslib-%{version}/
+./configure CFLAGS="${OPT}" --with-htslib=${RPM_BUILD_ROOT}/%{INSTALL_DIR} --prefix=%{INSTALL_DIR}
+make -j5 DESTDIR=${RPM_BUILD_ROOT} all
+make -j5 DESTDIR=${RPM_BUILD_ROOT} install
+cd .. && rm -rf bcftools-%{version}
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -178,21 +182,14 @@ make DESTDIR=${RPM_BUILD_ROOT} install
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message = [[
-The %{pkg_base_name} module file defines the following environment variables:
+The %{name} module file defines the following environment variables:
 
  - %{MODULE_VAR}_DIR
+ - %{MODULE_VAR}_BIN
  - %{MODULE_VAR}_LIB
  - %{MODULE_VAR}_INC
 
-for the location of the %{pkg_base_name} distribution.
-
-For static linking on Linux* OS, 
-
-  gcc -O3 -o zpipe_ipp.out zpipe.c -I$IPPROOT/include -I$%{MODULE_VAR}_INC $%{MODULE_VAR}_LIB/libz.a $IPPROOT/lib/intel64/libippdc $IPPROOT/lib/intel64/libipps.a $IPPROOT/lib/intel64/libippcore.a
-
-For dynamic linking on Linux* OS, 
-
-  gcc -O3 -o zpipe_ipp.out zpipe.c -I$%{MODULE_VAR}_INC -L$%{MODULE_VAR}_LIB -lz
+for the location of the %{name} distribution.
 
 Documentation: %{url}
 
@@ -203,17 +200,21 @@ help(help_message,"\n")
 
 whatis("Name: %{name}")
 whatis("Version: %{version}")
-whatis("Category: applications, compression")
-whatis("Keywords: compressino, deflate")
+whatis("Category: computational biology, genomics")
+whatis("Keywords: Biology, Genomics")
 whatis("Description: %{shortsummary}")
 whatis("URL: %{url}")
 
+prepend_path("PATH",		"%{INSTALL_DIR}/bin")
 prepend_path("LD_LIBRARY_PATH",	"%{INSTALL_DIR}/lib")
 prepend_path("MANPATH",		"%{INSTALL_DIR}/share/man")
 
 setenv("%{MODULE_VAR}_DIR",     "%{INSTALL_DIR}")
+setenv("%{MODULE_VAR}_BIN",	"%{INSTALL_DIR}/bin")
 setenv("%{MODULE_VAR}_LIB",	"%{INSTALL_DIR}/lib")
 setenv("%{MODULE_VAR}_INC",	"%{INSTALL_DIR}/include")
+
+family("samtools")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -265,11 +266,11 @@ EOF
 %post %{PACKAGE}
 export PACKAGE_POST=1
 %include ./include/%{PLATFORM}/post-defines.inc
+# $RPM_INSTALL_PREFIX0 /tmpmod -> /opt/apps
+# $RPM_INSTALL_PREFIX1 /tmprpm -> /opt/apps
+
 %post %{MODULEFILE}
 export MODULEFILE_POST=1
-%include ./include/%{PLATFORM}/post-defines.inc
-%preun %{PACKAGE}
-export PACKAGE_PREUN=1
 %include ./include/%{PLATFORM}/post-defines.inc
 ########################################
 ############ Do Not Remove #############
@@ -279,3 +280,4 @@ export PACKAGE_PREUN=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
+

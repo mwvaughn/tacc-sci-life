@@ -31,10 +31,10 @@ Summary: %{shortsummary}
 
 ### Toggle On/Off ###
 %include ./include/system-defines.inc
-%include ./include/%{PLATFORM}/name-defines.inc
 %include ./include/%{PLATFORM}/rpm-dir.inc                  
 %include ./include/%{PLATFORM}/compiler-defines.inc
 %include ./include/%{PLATFORM}/mpi-defines.inc
+%include ./include/%{PLATFORM}/name-defines.inc
 ########################################
 ############ Do Not Remove #############
 ########################################
