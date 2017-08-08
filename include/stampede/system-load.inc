@@ -7,5 +7,5 @@ if [ -n "$MODULEPATH" ]; then
   clearMT
 fi
 
-export MODULEPATH=/opt/apps/xsede/modulefiles:/opt/apps/teragrid/modulefiles:/opt/apps/modulefiles:/opt/modulefiles
+export MODULEPATH=/opt/apps/xsede/modulefiles:/opt/apps/modulefiles:/opt/modulefiles
 module load TACC
