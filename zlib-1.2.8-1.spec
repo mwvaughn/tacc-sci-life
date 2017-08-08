@@ -178,17 +178,28 @@ make DESTDIR=${RPM_BUILD_ROOT} install
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message = [[
-The %{pkg_base_name} module file defines the following environment variables:
+The %{pkg_base_name} package is an Intel IPP optimized version of the zlib compression library. More information can be found online at:
+
+https://software.intel.com/en-us/articles/how-to-use-zlib-with-intel-ipp-opertimization
+
+For conventience we have included the following environment variables:
 
  - %{MODULE_VAR}_DIR
  - %{MODULE_VAR}_LIB
  - %{MODULE_VAR}_INC
 
-for the location of the %{pkg_base_name} distribution.
+If you already have an application that relies on a shared zlib library, you can automatically utilize this version by loading the module.
+
+$ module load ltools
+$ ldd `which pigz`
+$ module load zlib/1.2.8
+$ ldd `which pigz`
+
+You can also utilize the static and shared zlib libraries as follows:
 
 For static linking on Linux* OS, 
 
-  gcc -O3 -o zpipe_ipp.out zpipe.c -I$IPPROOT/include -I$%{MODULE_VAR}_INC $%{MODULE_VAR}_LIB/libz.a $IPPROOT/lib/intel64/libippdc $IPPROOT/lib/intel64/libipps.a $IPPROOT/lib/intel64/libippcore.a
+  icc -O3 -o zpipe_ipp.out zpipe.c -I$IPPROOT/include -I$%{MODULE_VAR}_INC $%{MODULE_VAR}_LIB/libz.a $IPP_LIBS
 
 For dynamic linking on Linux* OS, 
 
@@ -211,8 +222,11 @@ whatis("URL: %{url}")
 prepend_path("LD_LIBRARY_PATH",	"%{INSTALL_DIR}/lib")
 prepend_path("MANPATH",		"%{INSTALL_DIR}/share/man")
 
+local ipplib = os.getenv("IPPROOT") .. "/lib/intel64"
+
 setenv("%{MODULE_VAR}_DIR",     "%{INSTALL_DIR}")
 setenv("%{MODULE_VAR}_LIB",	"%{INSTALL_DIR}/lib")
+setenv("IPP_LIBS",		ipplib .. "/libippdc.a " .. ipplib .. "/libipps.a " .. ipplib .. "/libippcore.a")
 setenv("%{MODULE_VAR}_INC",	"%{INSTALL_DIR}/include")
 EOF
   

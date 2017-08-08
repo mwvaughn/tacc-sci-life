@@ -2,6 +2,14 @@
 
 These scripts are designed to support LMOD module development and useage.
 
+## moveRpm
+
+Copies RPMs to standard admin directories and presents you with rpm install commands for use on TACC Collab.
+
+```
+Usage: moveRpm RPM [RPM ...]
+```
+
 ## buildAll
 
 Get your tokens ready, because the `buildAll` accepts spec files as arguments and hops to each machine in the `systemList` array to natively build the software package. After the rpm is sucessfully built, `buildAll` will copy it to the standard RPM directory on that system. After iterating through each system and spec file, a list of installation commands will also be printed, which can then be pasted into the "Software Install" requests on collab.
