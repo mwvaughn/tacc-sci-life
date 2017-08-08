@@ -447,7 +447,7 @@ setenv("TACC_ZLIB_INC","/work/03076/gzynda/stampede2/public/apps/intel17/zlib/1.
 If everything goes well with your tests, you can use the `moveRpm` helper script to deposit the RPMs in their appropriate location.
 
 ```
-scripts/moveRpm ../stampede2/RPMS/x86_64/tacc-zlib-1.2.8-modulefile-1.2.8-1.x86_64.rpm ../stampede2/RPMS/x86_64/tacc-zlib-1.2.8-package-1.2.8-1.x86_64.rpm
+staff.stampede2(105)$ scripts/moveRpm ../stampede2/RPMS/x86_64/tacc-zlib-1.2.8-modulefile-1.2.8-1.x86_64.rpm ../stampede2/RPMS/x86_64/tacc-zlib-1.2.8-package-1.2.8-1.x86_64.rpm
 
 Move:
  - ../stampede2/RPMS/x86_64/tacc-zlib-1.2.8-intel17-modulefile-1.2.8-1.x86_64.rpm
