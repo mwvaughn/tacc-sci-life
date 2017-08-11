@@ -51,25 +51,20 @@ URL:       https://github.com/TACC/lifesci_spec
 Packager:  TACC - email@tacc.utexas.edu
 Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
 
-# Turn off debug package mode
-%define debug_package %{nil}
-%define dbg           %{nil}
-
-
 %package %{PACKAGE}
 Summary: %{shortsummary}
 Group:   Applications/Life Sciences
 %description package
-%{name}: %{shortsummary}
+%{pkg_base_name}: %{shortsummary}
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group:   Lmod/Modulefiles
 %description modulefile
-Module file for %{name}
+Module file for %{pkg_base_name}
 
 %description
-%{name}: %{shortsummary}
+%{pkg_base_name}: %{shortsummary}
 
 #---------------------------------------
 %prep
@@ -95,6 +90,8 @@ Module file for %{name}
 
 # Comment this out if pulling from git
 %setup -n %{pkg_base_name}-%{pkg_version}
+# If using multiple sources. Make sure that the "-n" names match.
+#%setup -T -D -a 1 -n %{pkg_base_name}-%{pkg_version}
 
 #---------------------------------------
 %build
@@ -140,6 +137,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
+# Example configure and make
 ./configure --prefix=%{INSTALL_DIR}
 make DESTDIR=$RPM_BUILD_ROOT -j 4
 make DESTDIR=$RPM_BUILD_ROOT -j 4 install
@@ -182,7 +180,7 @@ Version %{version}
 
 help(help_message,"\n")
 
-whatis("Name: %{name}")
+whatis("Name: %{pkg_base_name}")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
 whatis("Keywords: Biology, Genomics")

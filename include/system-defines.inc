@@ -1,4 +1,5 @@
 %define debug_package		%{nil}
+%define dbg                     %{nil}
 %define system			linux
 %define PLATFORM		%( echo $TACC_SYSTEM )
 
