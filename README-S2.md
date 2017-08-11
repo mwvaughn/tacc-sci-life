@@ -369,6 +369,27 @@ Since we will be compiling on Stampede2, we should use the latest version of the
 $ build_rpm.sh -i17 zlib-1.2.8-1.spec
 ```
 
+To help decide which directories you want to include in your modulefile, inspect your built RPM with
+
+```
+rpm -qlp ../stampede2/RPMS/x86_64/tacc-zlib-1.2.8-package-1.2.8-1.x86_64.rpm
+```
+
+and match or delete the
+
+```
+prepend_path("PATH",		"%{INSTALL_DIR}/bin")
+prepend_path("LD_LIBRARY_PATH",	"%{INSTALL_DIR}/lib")
+prepend_path("MANPATH",		"%{INSTALL_DIR}/share/man")
+
+setenv("%{MODULE_VAR}_DIR",     "%{INSTALL_DIR}")
+setenv("%{MODULE_VAR}_BIN",	"%{INSTALL_DIR}/bin")
+setenv("%{MODULE_VAR}_LIB",	"%{INSTALL_DIR}/lib")
+setenv("%{MODULE_VAR}_INC",	"%{INSTALL_DIR}/include")
+```
+
+variables as necessary.
+
 If all goes well, you should be left with two RPMS:
 
 - The RPM that contains all LMOD module files
