@@ -1,6 +1,6 @@
 #
 # Greg Zynda
-# 2017-08-01
+# 2017-08-11
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -16,18 +16,18 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-%define shortsummary Tools (written in C using htslib) for manipulating next-generation sequencing data
+%define shortsummary A powerful toolset for genome arithmetic
 Summary: %{shortsummary}
 
 # Give the package a base name
-%define pkg_base_name samtools
+%define pkg_base_name bedtools
 
 # Create some macros (spec file variables)
-%define major_version 1
-%define minor_version 5
-#%define patch_version 0
+%define major_version 2
+%define minor_version 26
+%define patch_version 0
 
-%define pkg_version %{major_version}.%{minor_version}
+%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
 ### Toggle On/Off ###
 %include ./include/system-defines.inc
@@ -45,23 +45,23 @@ Version:   %{pkg_version}
 ########################################
 
 Release:   1
-License:   MIT
+License:   BSD
 Group:     Applications/Life Sciences
-URL:       https://github.com/samtools/samtools
+URL:       https://github.com/arq5x/bedtools2
 Packager:  TACC - gzynda@tacc.utexas.edu
-Source:    samtools-%{pkg_version}.tar.bz2
+Source:    https://github.com/arq5x/bedtools2/releases/download/v%{version}/%{pkg_base_name}-%{version}.tar.gz
 
 %package %{PACKAGE}
 Summary: %{shortsummary}
-Group: Applications/Life Sciences
+Group:   Applications/Life Sciences
 %description package
-%{shortsummary}
+%{pkg_base_name}: %{shortsummary}
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
-Group: Lmod/Modulefiles
+Group:   Lmod/Modulefiles
 %description modulefile
-Module file for %{name}
+Module file for %{pkg_base_name}
 
 %description
 %{pkg_base_name}: %{shortsummary}
@@ -75,6 +75,10 @@ Module file for %{name}
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+
+# Comment this out if pulling from git
+%setup -n %{pkg_base_name}%{major_version}
+
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -88,8 +92,6 @@ Module file for %{name}
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
-# Comment this out if pulling from git
-%setup -n samtools-%{pkg_version}
 
 #---------------------------------------
 %build
@@ -102,18 +104,16 @@ Module file for %{name}
 
 # Setup modules
 %include ./include/%{PLATFORM}/system-load.inc
-
 ##################################
 # If using build_rpm
 ##################################
-module purge
 %include ./include/%{PLATFORM}/compiler-load.inc
 #%include ./include/%{PLATFORM}/mpi-load.inc
 #%include ./include/%{PLATFORM}/mpi-env-vars.inc
 ##################################
 # Manually load modules
 ##################################
-module load zlib/1.2.8
+# module load
 ##################################
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -137,60 +137,13 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-export IPPROOT=/opt/intel/compilers_and_libraries_2017.4.196/linux/ipp
-OPT="-O3 %{TACC_OPT} -ipo"
-LZSTATIC="${TACC_ZLIB_LIB}/libz.a ${IPPROOT}/lib/intel64/libippdc.a ${IPPROOT}/lib/intel64/libipps.a ${IPPROOT}/lib/intel64/libippcore.a"
+# Use external CXXFLAGS
+sed -i '/^export BT_ROOT/a export CXXFLAGS=-O3 %{TACC_OPT} -ipo -std=c++11 -D_FILE_OFFSET_BITS=64 -fPIC $(INCLUDES)' Makefile
+# Fix error
+sed -i 's/isnan/std::isnan/g' src/utils/KeyListOps/KeyListOps.cpp
+make AR=xiar CC=icc CXX=icpc prefix=%{INSTALL_DIR} DESTDIR=$RPM_BUILD_ROOT -j 4 install
+make AR=xiar CC=icc CXX=icpc prefix=%{INSTALL_DIR} DESTDIR=$RPM_BUILD_ROOT -j 4
 
-## Make HTSLIB
-rm -rf htslib-%{version}/
-cd .. && tar -xjf %{_sourcedir}/htslib-%{version}.tar.bz2
-cd htslib-%{version}
-./configure CFLAGS="${OPT} -I${IPPROOT}/include -I${TACC_ZLIB_INC}" --disable-libcurl --prefix=%{INSTALL_DIR}
-# replace zlib
-sed -i -e "s~\-lz~${LZSTATIC}~" -e "s~\-lm~-limf~" $(find . -type f | xargs -n 1 grep -lP "\-(lz|lm)")
-make -j5 DESTDIR=${RPM_BUILD_ROOT} all
-make DESTDIR=${RPM_BUILD_ROOT} install
-cd .. && rm -rf htslib-%{version} && cd samtools-1.5
-find ${RPM_BUILD_ROOT}
-
-## Make Samtools
-./configure CFLAGS="${OPT} -I${IPPROOT}/include -I${TACC_ZLIB_INC}" --with-htslib=${RPM_BUILD_ROOT}/%{INSTALL_DIR} --prefix=%{INSTALL_DIR}
-# replace zlib
-sed -i -e "s~\-lz~${LZSTATIC}~" -e "s~\-lm~-limf~" $(find . -type f | xargs -n 1 grep -lP "\-(lz|lm)")
-make -j5 DESTDIR=${RPM_BUILD_ROOT} all
-make DESTDIR=${RPM_BUILD_ROOT} install
-cd ..
-
-## Make bcftools
-tar -xjf %{_sourcedir}/bcftools-%{version}.tar.bz2
-cd bcftools-%{version} && rm -rf htslib-%{version}/
-./configure CFLAGS="${OPT} -I${IPPROOT}/include -I${TACC_ZLIB_INC}" --with-htslib=${RPM_BUILD_ROOT}/%{INSTALL_DIR} --prefix=%{INSTALL_DIR}
-# replace zlib
-sed -i -e "s~\-lz~${LZSTATIC}~" -e "s~\-lm~-limf~" $(find . -type f | xargs -n 1 grep -lP "\-(lz|lm)")
-make -j5 DESTDIR=${RPM_BUILD_ROOT} all
-make DESTDIR=${RPM_BUILD_ROOT} install
-cd .. && rm -rf bcftools-%{version}
-
-### Make Samtools
-#./configure CFLAGS="${OPT} -I${IPPROOT}/include -I${TACC_ZLIB_INC}" --with-htslib=${RPM_BUILD_ROOT}/%{INSTALL_DIR} --prefix=%{INSTALL_DIR}
-## replace zlib
-#sed -i -e "s~\-lz~${TACC_ZLIB_LIB}/libz.a ${IPPROOT}/lib/intel64/libippdc.a ${IPPROOT}/lib/intel64/libipps.a ${IPPROOT}/lib/intel64/libippcore.a~" $(find . -type f | xargs -n 1 grep -lP "\-lz")
-## replicate lm
-#[ "$CC" == "icc" ] && sed -i -e "s~\-lm~-limf~" $(find . -type f | xargs -n 1 grep -lP "\-lm")
-#make -j3 DESTDIR=${RPM_BUILD_ROOT} HTSLIB_LDFLAGS="" HTSLIB_LIB="${RPM_BUILD_ROOT}/%{INSTALL_DIR}/lib/libhts.a -lbz2 -llzma" all
-#make DESTDIR=${RPM_BUILD_ROOT} install
-#cd ..
-#
-### Make bcftools
-#tar -xjf %{_sourcedir}/bcftools-%{version}.tar.bz2
-#cd bcftools-%{version} && rm -rf htslib-%{version}/
-#./configure CFLAGS="${OPT} -I${IPPROOT}/include -I${TACC_ZLIB_INC}" --with-htslib=${RPM_BUILD_ROOT}/%{INSTALL_DIR} --prefix=%{INSTALL_DIR}
-#sed -i -e "s~\-lz~${TACC_ZLIB_LIB}/libz.a ${IPPROOT}/lib/intel64/libippdc.a ${IPPROOT}/lib/intel64/libipps.a ${IPPROOT}/lib/intel64/libippcore.a~" $(find . -type f | xargs -n 1 grep -lP "\-lz")
-## replicate lm
-#[ "$CC" == "icc" ] && sed -i -e "s~\-lm~-limf~" $(find . -type f | xargs -n 1 grep -lP "\-lm")
-#make -j3 DESTDIR=${RPM_BUILD_ROOT} HTSLIB_LDFLAGS="" HTSLIB_LIB="${RPM_BUILD_ROOT}/%{INSTALL_DIR}/lib/libhts.a -lbz2 -llzma" all
-#make DESTDIR=${RPM_BUILD_ROOT} install
-#cd .. && rm -rf bcftools-%{version}
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -217,10 +170,8 @@ The %{pkg_base_name} module file defines the following environment variables:
 
  - %{MODULE_VAR}_DIR
  - %{MODULE_VAR}_BIN
- - %{MODULE_VAR}_LIB
- - %{MODULE_VAR}_INC
 
-for the location of the %{name} distribution.
+for the location of the %{pkg_base_name} distribution.
 
 Documentation: %{url}
 
@@ -237,15 +188,9 @@ whatis("Description: %{shortsummary}")
 whatis("URL: %{url}")
 
 prepend_path("PATH",		"%{INSTALL_DIR}/bin")
-prepend_path("LD_LIBRARY_PATH",	"%{INSTALL_DIR}/lib")
-prepend_path("MANPATH",		"%{INSTALL_DIR}/share/man")
 
 setenv("%{MODULE_VAR}_DIR",     "%{INSTALL_DIR}")
 setenv("%{MODULE_VAR}_BIN",	"%{INSTALL_DIR}/bin")
-setenv("%{MODULE_VAR}_LIB",	"%{INSTALL_DIR}/lib")
-setenv("%{MODULE_VAR}_INC",	"%{INSTALL_DIR}/include")
-
-family("samtools")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
@@ -297,11 +242,11 @@ EOF
 %post %{PACKAGE}
 export PACKAGE_POST=1
 %include ./include/%{PLATFORM}/post-defines.inc
-# $RPM_INSTALL_PREFIX0 /tmpmod -> /opt/apps
-# $RPM_INSTALL_PREFIX1 /tmprpm -> /opt/apps
-
 %post %{MODULEFILE}
 export MODULEFILE_POST=1
+%include ./include/%{PLATFORM}/post-defines.inc
+%preun %{PACKAGE}
+export PACKAGE_PREUN=1
 %include ./include/%{PLATFORM}/post-defines.inc
 ########################################
 ############ Do Not Remove #############
@@ -311,4 +256,3 @@ export MODULEFILE_POST=1
 %clean
 #---------------------------------------
 rm -rf $RPM_BUILD_ROOT
-
