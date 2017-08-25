@@ -492,8 +492,8 @@ Please request the following for installation:
 Done! You can now submit a collab ticket for the RPMs to be installed. After you submit your collab ticket, remember to commit your new spec file back to the repo.
 
 ```
-git pull
+git pull origin separate-rpms
 git add your-new.spec
 git commit -am "Just completed a new spec file"
-git push
+git push origin separate-rpms
 ```
