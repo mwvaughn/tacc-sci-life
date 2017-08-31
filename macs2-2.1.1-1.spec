@@ -16,11 +16,11 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-%define shortsummary Fast splice junction mapper for RNA-Seq reads
+%define shortsummary MACS2 empirically models the length of the sequenced ChIP fragments and uses it to improve the spatial resolution of predicted binding sites
 Summary: %{shortsummary}
 
 # Give the package a base name
-%define pkg_base_name tophat
+%define pkg_base_name macs2
 
 # Create some macros (spec file variables)
 %define major_version 2
@@ -45,11 +45,11 @@ Version:   %{pkg_version}
 ########################################
 
 Release:   1
-License:   GPLv2
+License:   GPL
 Group:     Applications/Life Sciences
-URL:       http://ccb.jhu.edu/software/tophat/index.shtml
+URL:       https://pypi.python.org/pypi/MACS2
 Packager:  TACC - jawon@tacc.utexas.edu
-Source:    https://ccb.jhu.edu/software/tophat/downloads/%{pkg_base_name}-%{major_version}.%{minor_version}.%{patch_version}.Linux_x86_64.tar.gz
+Source:    https://pypi.python.org/packages/9f/99/a8ac96b357f6b0a6f559fe0f5a81bcae12b98579551620ce07c5183aee2c/MACS2-%{major_version}.%{minor_version}.%{patch_version}.20160309.tar.gz
 
 %package %{PACKAGE}
 Summary: %{shortsummary}
@@ -70,6 +70,7 @@ Module file for %{pkg_base_name}
 %prep
 #---------------------------------------
 
+rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 #------------------------
 %if %{?BUILD_PACKAGE}
 #------------------------
@@ -136,7 +137,10 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   #========================================
   # Insert Build/Install Instructions Here
   #========================================
-cp -r tophat-2.1.1.Linux_x86_64/* $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+rm -Rf *
+module load python
+pip install macs2==2.1.1.20160309 --prefix=$PWD
+cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 
 # Use external CXXFLAGS
 #sed -i '/^export BT_ROOT/a export CXXFLAGS=-O3 %{TACC_OPT} -ipo -std=c++11 -D_FILE_OFFSET_BITS=64 -fPIC $(INCLUDES)' Maakefile
@@ -170,7 +174,7 @@ local help_message = [[
 The %{pkg_base_name} module file defines the following environment variables:
 
  - %{MODULE_VAR}_DIR
-
+ - %{MODULE_VAR}_BIN
 for the location of the %{pkg_base_name} distribution.
 
 Documentation: %{url}
@@ -187,8 +191,10 @@ whatis("Keywords: Biology, Genomics")
 whatis("Description: %{shortsummary}")
 whatis("URL: %{url}")
 
-prepend_path("PATH",		"%{INSTALL_DIR}")
+prepend_path("PATH",		"%{INSTALL_DIR}/bin")
+prepend_path("PYTHONPATH",      "%{INSTALL_DIR}/lib/python2.7/site-packages/")
 setenv("%{MODULE_VAR}_DIR",     "%{INSTALL_DIR}")
+setenv("%{MODULE_VAR}_BIN",     "%{INSTALL_DIR}/bin")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
