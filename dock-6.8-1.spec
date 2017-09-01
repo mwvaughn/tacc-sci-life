@@ -142,15 +142,15 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 cd install/
 
 ./configure intel
-make all CFLAGS=" -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 " \
-         FFLAGS=" -O2 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 " \
-         OCFLAGS=" -O3 -D_ANSI_SOURCE -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 "
+make all CFLAGS=" -O3 %{TACC_OPT} " \
+         FFLAGS=" -O2 %{TACC_OPT} " \
+         OCFLAGS=" -O3 -D_ANSI_SOURCE %{TACC_OPT} "
 make clean
 
 ./configure intel.intelmpi.parallel
-make dock CFLAGS=" -DBUILD_DOCK_WITH_MPI -O3 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 " \
-          FFLAGS=" -O2 -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 " \
-          OCFLAGS=" -O3 -D_ANSI_SOURCE -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 "
+make dock CFLAGS=" -DBUILD_DOCK_WITH_MPI -O3 %{TACC_OPT} " \
+          FFLAGS=" -O2 %{TACC_OPT} " \
+          OCFLAGS=" -O3 -D_ANSI_SOURCE %{TACC_OPT} "
 make clean
 
 cd ../

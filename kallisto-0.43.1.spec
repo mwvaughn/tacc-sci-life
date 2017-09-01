@@ -151,9 +151,6 @@ cmake -DCMAKE_C_COMPILER=` which icc ` \
       -DHDF5_DIR="/opt/apps/intel17/hdf5/1.8.16/x86_64" \
       ../
 
-#      -DCMAKE_CXX_FLAGS=" -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 " \
-#      -DCMAKE_C_FLAGS=" -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 " \
-
 make -j4
 make install
 

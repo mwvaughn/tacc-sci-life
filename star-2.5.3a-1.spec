@@ -141,15 +141,15 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 cd source/
 
 make STAR CXX=` which icpc ` \
-     CXXFLAGSextra=" -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 " \
-     LDFLAGSextra=" -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 "
+     CXXFLAGSextra=" %{TACC_OPT} " \
+     LDFLAGSextra=" %{TACC_OPT} "
 
 mv STAR ../bin/
 make clean
 
 make STARlong CXX=` which icpc ` \
-     CXXFLAGSextra=" -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 " \
-     LDFLAGSextra=" -xCORE-AVX2 -axMIC-AVX512,CORE-AVX512 "
+     CXXFLAGSextra=" %{TACC_OPT} " \
+     LDFLAGSextra=" %{TACC_OPT} "
 
 mv STARlong ../bin
 
