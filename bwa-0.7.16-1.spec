@@ -1,6 +1,6 @@
 #
-# Jawon Song
-# 2017-09-01
+# Greg Zynda
+# 2017-08-09
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -16,23 +16,23 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-%define shortsummary The SRA Toolkit and SDK from NCBI is a collection of tools and libraries for using data in the INSDC Sequence Read Archives
+%define shortsummary Burrow-Wheeler Aligner for pairwise alignment between DNA sequences
 Summary: %{shortsummary}
 
 # Give the package a base name
-%define pkg_base_name sratoolkit
+%define pkg_base_name bwa
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 8
-%define patch_version 2
+%define major_version 0
+%define minor_version 7
+%define patch_version 16a
 
 %define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
 ### Toggle On/Off ###
 %include ./include/system-defines.inc
 %include ./include/%{PLATFORM}/rpm-dir.inc                  
-#%include ./include/%{PLATFORM}/compiler-defines.inc
+%include ./include/%{PLATFORM}/compiler-defines.inc
 #%include ./include/%{PLATFORM}/mpi-defines.inc
 %include ./include/%{PLATFORM}/name-defines.inc
 ########################################
@@ -45,26 +45,31 @@ Version:   %{pkg_version}
 ########################################
 
 Release:   1
-License:   GPL
+License:   BSD
 Group:     Applications/Life Sciences
-URL:       https://github.com/ncbi/sra-tools
-Packager:  TACC - jawon@tacc.utexas.edu
-Source:    http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/%{pkg_version}/%{pkg_base_name}.%{pkg_version}-1-centos_linux64.tar.gz
+URL:       https://github.com/lh3/bwa
+Packager:  TACC - email@tacc.utexas.edu
+Source:    https://github.com/lh3/bwa/releases/download/v0.7.16/%{pkg_base_name}-%{pkg_version}.tar.bz2
+
+# Turn off debug package mode
+%define debug_package %{nil}
+%define dbg           %{nil}
+
 
 %package %{PACKAGE}
 Summary: %{shortsummary}
 Group:   Applications/Life Sciences
 %description package
-%{pkg_base_name}: %{shortsummary}
+%{name}: %{shortsummary}
 
 %package %{MODULEFILE}
 Summary: The modulefile RPM
 Group:   Lmod/Modulefiles
 %description modulefile
-Module file for %{pkg_base_name}
+Module file for %{name}
 
 %description
-%{pkg_base_name}: %{shortsummary}
+%{name}: %{shortsummary}
 
 #---------------------------------------
 %prep
@@ -75,10 +80,6 @@ Module file for %{pkg_base_name}
 #------------------------
   # Delete the package installation directory.
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
-
-# Comment this out if pulling from git
-%setup -n %{pkg_base_name}.%{pkg_version}-1-centos_linux64
-
 #-----------------------
 %endif # BUILD_PACKAGE |
 #-----------------------
@@ -92,6 +93,8 @@ Module file for %{pkg_base_name}
 %endif # BUILD_MODULEFILE |
 #--------------------------
 
+# Comment this out if pulling from git
+%setup -n %{pkg_base_name}-%{pkg_version}
 
 #---------------------------------------
 %build
@@ -107,13 +110,14 @@ Module file for %{pkg_base_name}
 ##################################
 # If using build_rpm
 ##################################
-#%include ./include/%{PLATFORM}/compiler-load.inc
+%include ./include/%{PLATFORM}/compiler-load.inc
 #%include ./include/%{PLATFORM}/mpi-load.inc
 #%include ./include/%{PLATFORM}/mpi-env-vars.inc
 ##################################
 # Manually load modules
 ##################################
-# module load
+module use $WORK/public/apps/intel17/modulefiles
+module load zlib
 ##################################
 
 echo "Building the package?:    %{BUILD_PACKAGE}"
@@ -137,45 +141,9 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/
-
-case $TACC_SYSTEM in
-wrangler)
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/scratch_cache << 'EOS'
-#!/bin/bash
-
-# Make ncbi config folder
-[ -e $HOME/.ncbi ] || mkdir $HOME/.ncbi
-
-# Make ncbi cache folder on scratch
-[ -e $DATA/ncbi ] || mkdir $DATA/ncbi
-
-cat > $HOME/.ncbi/user-settings.mkfg << EOF
-/repository/user/main/public/root = "$DATA/ncbi"
-EOF
-
-echo "$DATA/ncbi will now be used to cache sra files"
-EOS
-;;
-*)
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/scratch_cache << 'EOS'
-#!/bin/bash
-
-# Make ncbi config folder
-[ -e $HOME/.ncbi ] || mkdir $HOME/.ncbi
-
-# Make ncbi cache folder on scratch
-[ -e $SCRATCH/ncbi ] || mkdir $SCRATCH/ncbi
-
-cat > $HOME/.ncbi/user-settings.mkfg << EOF
-/repository/user/main/public/root = "$SCRATCH/ncbi"
-EOF
-
-echo "$SCRATCH/ncbi will now be used to cache sra files"
-EOS
-;;
-esac
-chmod +x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/scratch_cache
+sed -i "s/chunk_size = 10000000/chunk_size = 1000000/" *.c
+make -j4 CC=${CC} AR=xiar CFLAGS="-O2 -xCORE-AVX2 -no-vec -ipo -I$IPPROOT/include -I$TACC_ZLIB_INC" LIBS="-limf $TACC_ZLIB_LIB/libz.a $IPP_LIBS -lpthread -lrt" all
+cp bwa *.pl $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -202,35 +170,31 @@ local help_message = [[
 The %{pkg_base_name} module file defines the following environment variables:
 
  - %{MODULE_VAR}_DIR
- - %{MODULE_VAR}_EXAMPLE - example files
 
-To improve download speed, the prefetch command has been aliased to always
-use aspera. We also suggest running
+for the location of the %{pkg_base_name} distribution. We recommend that you
+run bwa using 136 threads.
 
-$ scratch_cache
+bwa mem -t 136
 
-to change your cache directory to use the scratch filesystem.
+or split your job into multiple instances of bwa.
 
-Documentation can be found online at https://github.com/ncbi/sra-tools/wiki
+Documentation: %{url}
 
 Version %{version}
 ]]
 
 help(help_message,"\n")
 
-whatis("Name: %{pkg_base_name}")
+whatis("Name: %{name}")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
-whatis("Keywords: Biology, Genomics, archive, ncbi")
+whatis("Keywords: Biology, Genomics, Alignment, Sequencing")
 whatis("Description: %{shortsummary}")
 whatis("URL: %{url}")
 
-setenv("%{MODULE_VAR}_DIR",	"%{INSTALL_DIR}")
-setenv("%{MODULE_VAR}_EXAMPLE",	pathJoin("%{INSTALL_DIR}","example"))
+prepend_path("PATH",		"%{INSTALL_DIR}")
 
-prepend_path("PATH",		pathJoin("%{INSTALL_DIR}","bin"))
-set_alias("prefetch","prefetch -a \"$TACC_ASPERA_ASCP|$TACC_ASPERA_KEY\"")
-always_load("aspera-connect")
+setenv("%{MODULE_VAR}_DIR",     "%{INSTALL_DIR}")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'

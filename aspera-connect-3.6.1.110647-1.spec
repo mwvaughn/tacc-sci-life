@@ -1,6 +1,6 @@
 #
-# Jawon Song
-# 2017-09-01
+# Name
+# 2017-08-01
 #
 # Important Build-Time Environment Variables (see name-defines.inc)
 # NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
@@ -16,16 +16,16 @@
 # rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
 # rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-%define shortsummary The SRA Toolkit and SDK from NCBI is a collection of tools and libraries for using data in the INSDC Sequence Read Archives
+%define shortsummary Aspera Connect client
 Summary: %{shortsummary}
 
 # Give the package a base name
-%define pkg_base_name sratoolkit
+%define pkg_base_name aspera-connect
 
 # Create some macros (spec file variables)
-%define major_version 2
-%define minor_version 8
-%define patch_version 2
+%define major_version 3
+%define minor_version 6
+%define patch_version 1.110647
 
 %define pkg_version %{major_version}.%{minor_version}.%{patch_version}
 
@@ -45,11 +45,11 @@ Version:   %{pkg_version}
 ########################################
 
 Release:   1
-License:   GPL
+License:   IBM
 Group:     Applications/Life Sciences
-URL:       https://github.com/ncbi/sra-tools
-Packager:  TACC - jawon@tacc.utexas.edu
-Source:    http://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/%{pkg_version}/%{pkg_base_name}.%{pkg_version}-1-centos_linux64.tar.gz
+Url:       http://download.asperasoft.com/download/docs/ascp/3.5.2/html/index.html#dita/ascp_usage.html
+Packager:  TACC - gzynda@tacc.utexas.edu
+Source:    http://download.asperasoft.com/download/sw/connect/3.6.1/aspera-connect-3.6.1.110647-linux-64.tar.gz
 
 %package %{PACKAGE}
 Summary: %{shortsummary}
@@ -77,7 +77,9 @@ Module file for %{pkg_base_name}
   rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
 # Comment this out if pulling from git
-%setup -n %{pkg_base_name}.%{pkg_version}-1-centos_linux64
+%setup -n %{PNAME}-%{version}-linux-64 -c
+# If using multiple sources. Make sure that the "-n" names match.
+#%setup -T -D -a 1 -n %{pkg_base_name}-%{pkg_version}
 
 #-----------------------
 %endif # BUILD_PACKAGE |
@@ -91,7 +93,6 @@ Module file for %{pkg_base_name}
 #--------------------------
 %endif # BUILD_MODULEFILE |
 #--------------------------
-
 
 #---------------------------------------
 %build
@@ -110,6 +111,7 @@ Module file for %{pkg_base_name}
 #%include ./include/%{PLATFORM}/compiler-load.inc
 #%include ./include/%{PLATFORM}/mpi-load.inc
 #%include ./include/%{PLATFORM}/mpi-env-vars.inc
+%define MODULE_VAR  %{MODULE_VAR_PREFIX}ASPERA
 ##################################
 # Manually load modules
 ##################################
@@ -137,45 +139,24 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
-cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/
+export PREFIX=$RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-case $TACC_SYSTEM in
-wrangler)
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/scratch_cache << 'EOS'
-#!/bin/bash
-
-# Make ncbi config folder
-[ -e $HOME/.ncbi ] || mkdir $HOME/.ncbi
-
-# Make ncbi cache folder on scratch
-[ -e $DATA/ncbi ] || mkdir $DATA/ncbi
-
-cat > $HOME/.ncbi/user-settings.mkfg << EOF
-/repository/user/main/public/root = "$DATA/ncbi"
+## Patch
+patch aspera-connect-3.6.1.110647-linux-64.sh -i - <<'EOF'
+11c11
+< INSTALL_DIR=~/.aspera/connect
+---
+> INSTALL_DIR=$PREFIX
 EOF
 
-echo "$DATA/ncbi will now be used to cache sra files"
-EOS
-;;
-*)
-cat > $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/scratch_cache << 'EOS'
-#!/bin/bash
+bash aspera-connect-3.6.1.110647-linux-64.sh
 
-# Make ncbi config folder
-[ -e $HOME/.ncbi ] || mkdir $HOME/.ncbi
-
-# Make ncbi cache folder on scratch
-[ -e $SCRATCH/ncbi ] || mkdir $SCRATCH/ncbi
-
-cat > $HOME/.ncbi/user-settings.mkfg << EOF
-/repository/user/main/public/root = "$SCRATCH/ncbi"
-EOF
-
-echo "$SCRATCH/ncbi will now be used to cache sra files"
-EOS
-;;
-esac
-chmod +x $RPM_BUILD_ROOT/%{INSTALL_DIR}/bin/scratch_cache
+rm $RPM_BUILD_ROOT/%{INSTALL_DIR}/etc/asperaconnect.path
+rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/var
+rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/res
+rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/localization
+# comes with a libc that breaks things
+rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}/lib
 
 #-----------------------  
 %endif # BUILD_PACKAGE |
@@ -202,16 +183,12 @@ local help_message = [[
 The %{pkg_base_name} module file defines the following environment variables:
 
  - %{MODULE_VAR}_DIR
- - %{MODULE_VAR}_EXAMPLE - example files
+ - %{MODULE_VAR}_ASCP - the location of the ascp program
+ - %{MODULE_VAR}_OPENSSH - the location of the openssh key
 
-To improve download speed, the prefetch command has been aliased to always
-use aspera. We also suggest running
+for the location of the %{pkg_base_name} distribution.
 
-$ scratch_cache
-
-to change your cache directory to use the scratch filesystem.
-
-Documentation can be found online at https://github.com/ncbi/sra-tools/wiki
+Documentation: %{url}
 
 Version %{version}
 ]]
@@ -221,16 +198,15 @@ help(help_message,"\n")
 whatis("Name: %{pkg_base_name}")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
-whatis("Keywords: Biology, Genomics, archive, ncbi")
+whatis("Keywords: Biology, Genomics, transfer, ncbi, utility")
 whatis("Description: %{shortsummary}")
 whatis("URL: %{url}")
 
-setenv("%{MODULE_VAR}_DIR",	"%{INSTALL_DIR}")
-setenv("%{MODULE_VAR}_EXAMPLE",	pathJoin("%{INSTALL_DIR}","example"))
+setenv("%{MODULE_VAR}_DIR",	"%{INSTALL_DIR}/bin")
+setenv("%{MODULE_VAR}_ASCP",	"%{INSTALL_DIR}/bin/ascp")
+setenv("%{MODULE_VAR}_KEY",	"%{INSTALL_DIR}/etc/asperaweb_id_dsa.openssh")
 
-prepend_path("PATH",		pathJoin("%{INSTALL_DIR}","bin"))
-set_alias("prefetch","prefetch -a \"$TACC_ASPERA_ASCP|$TACC_ASPERA_KEY\"")
-always_load("aspera-connect")
+prepend_path("PATH",		"%{INSTALL_DIR}/bin")
 EOF
   
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
