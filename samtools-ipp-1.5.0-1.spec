@@ -25,7 +25,7 @@ Summary: %{shortsummary}
 # Create some macros (spec file variables)
 %define major_version 1
 %define minor_version 5
-#%define patch_version 0
+%define patch_version 0
 
 %define pkg_version %{major_version}.%{minor_version}
 
@@ -171,26 +171,6 @@ make -j5 DESTDIR=${RPM_BUILD_ROOT} all
 make DESTDIR=${RPM_BUILD_ROOT} install
 cd .. && rm -rf bcftools-%{version}
 
-### Make Samtools
-#./configure CFLAGS="${OPT} -I${IPPROOT}/include -I${TACC_ZLIB_INC}" --with-htslib=${RPM_BUILD_ROOT}/%{INSTALL_DIR} --prefix=%{INSTALL_DIR}
-## replace zlib
-#sed -i -e "s~\-lz~${TACC_ZLIB_LIB}/libz.a ${IPPROOT}/lib/intel64/libippdc.a ${IPPROOT}/lib/intel64/libipps.a ${IPPROOT}/lib/intel64/libippcore.a~" $(find . -type f | xargs -n 1 grep -lP "\-lz")
-## replicate lm
-#[ "$CC" == "icc" ] && sed -i -e "s~\-lm~-limf~" $(find . -type f | xargs -n 1 grep -lP "\-lm")
-#make -j3 DESTDIR=${RPM_BUILD_ROOT} HTSLIB_LDFLAGS="" HTSLIB_LIB="${RPM_BUILD_ROOT}/%{INSTALL_DIR}/lib/libhts.a -lbz2 -llzma" all
-#make DESTDIR=${RPM_BUILD_ROOT} install
-#cd ..
-#
-### Make bcftools
-#tar -xjf %{_sourcedir}/bcftools-%{version}.tar.bz2
-#cd bcftools-%{version} && rm -rf htslib-%{version}/
-#./configure CFLAGS="${OPT} -I${IPPROOT}/include -I${TACC_ZLIB_INC}" --with-htslib=${RPM_BUILD_ROOT}/%{INSTALL_DIR} --prefix=%{INSTALL_DIR}
-#sed -i -e "s~\-lz~${TACC_ZLIB_LIB}/libz.a ${IPPROOT}/lib/intel64/libippdc.a ${IPPROOT}/lib/intel64/libipps.a ${IPPROOT}/lib/intel64/libippcore.a~" $(find . -type f | xargs -n 1 grep -lP "\-lz")
-## replicate lm
-#[ "$CC" == "icc" ] && sed -i -e "s~\-lm~-limf~" $(find . -type f | xargs -n 1 grep -lP "\-lm")
-#make -j3 DESTDIR=${RPM_BUILD_ROOT} HTSLIB_LDFLAGS="" HTSLIB_LIB="${RPM_BUILD_ROOT}/%{INSTALL_DIR}/lib/libhts.a -lbz2 -llzma" all
-#make DESTDIR=${RPM_BUILD_ROOT} install
-#cd .. && rm -rf bcftools-%{version}
 #-----------------------  
 %endif # BUILD_PACKAGE |
 #-----------------------
