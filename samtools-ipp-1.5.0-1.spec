@@ -193,6 +193,8 @@ cd .. && rm -rf bcftools-%{version}
 # Write out the modulefile associated with the application
 cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
 local help_message = [[
+This version of samtools has been optimized using the Intel IPP tuned zlib for extra performance.
+
 The %{pkg_base_name} module file defines the following environment variables:
 
  - %{MODULE_VAR}_DIR

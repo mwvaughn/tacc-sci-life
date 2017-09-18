@@ -44,7 +44,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 ########################################
 
-Release:   1
+Release:   2
 License:   BSD
 Group:     Applications/Life Sciences
 URL:       https://www.bioinformatics.babraham.ac.uk/projects/fastqc/
@@ -140,6 +140,7 @@ echo "Building the modulefile?: %{BUILD_MODULEFILE}"
   # Insert Build/Install Instructions Here
   #========================================
 
+chmod a+x fastqc
 cp -r * $RPM_BUILD_ROOT/%{INSTALL_DIR}/
 
 #-----------------------  

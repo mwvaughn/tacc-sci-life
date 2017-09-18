@@ -44,7 +44,7 @@ Name:      %{pkg_name}
 Version:   %{pkg_version}
 ########################################
 
-Release:   1
+Release:   2
 License:   IBM
 Group:     Applications/Life Sciences
 Url:       http://download.asperasoft.com/download/docs/ascp/3.5.2/html/index.html#dita/ascp_usage.html
