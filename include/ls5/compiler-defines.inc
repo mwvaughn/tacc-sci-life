@@ -31,4 +31,9 @@
   exit
 %endif
 
-
+%if "%{comp_fam}" == "gcc"
+  %define TACC_OPT -march=sandybridge -mtune=haswell
+%endif
+%if "%{comp_fam}" == "intel"
+  %define TACC_OPT -xAVX -axCORE-AVX2
+%endif

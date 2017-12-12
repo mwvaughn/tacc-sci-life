@@ -38,9 +38,15 @@ for file in $modFile $rpmFile; do
 done
 
 DB=${prefix}/db
+if [ "$TACC_SYSTEM" == "ls5" ]; then
+	DBA="--dbpath $DB"
+else
+	DBA="--dbpath=$DB"
+fi
+
 echo "Installing RPMs"
-RPM_DBPATH=$DB rpm --relocate /tmpmod=$prefix -i --nodeps --dbpath=$DB $modFile && \
-RPM_DBPATH=$DB rpm --relocate /tmprpm=$prefix -i --nodeps --dbpath=$DB $rpmFile && \
+RPM_DBPATH=$DB rpm --relocate /tmpmod=$prefix -i --nodeps ${DBA} $modFile && \
+RPM_DBPATH=$DB rpm --relocate /tmprpm=$prefix -i --nodeps ${DBA} $rpmFile && \
 echo "INSTALLED! - ignore the warnings"
 
 #figure out where the modulefile is
