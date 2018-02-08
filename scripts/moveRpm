@@ -23,6 +23,9 @@ function askInput {
 	return 0
 }
 
+MODLOC=/opt/apps
+RPMLOC=/home1/apps
+
 case "$TACC_SYSTEM" in
 	stampede2)
 		RPMDIR=/admin/build/admin/rpms/${TACC_SYSTEM}/RPMS/x86_64
@@ -47,6 +50,7 @@ case "$TACC_SYSTEM" in
 	ls5)
 		RPMDIR=/opt/apps/build/blocks/admin/rpms/RPMS/x86_64/08_lsci
 		address=staff.${TACC_SYSTEM}.tacc.utexas.edu
+		RPMLOC=/opt/apps
 		;;
 	*)
 		echo "No rule for ${TACC_SYSTEM}. Exiting"; exit 1
@@ -67,10 +71,10 @@ ssh -t $address bash -c "'mkdir $TF && cp $TOINSTALL $TF && sudo su - -c \"cp $T
 
 for rpm in $TOINSTALL; do
 	if [[ $rpm == *"modulefile"* ]]; then
-		OUTSTR+="\n  rpm -ivh --nodeps --relocate /tmpmod=/opt/apps $RPMDIR/$(basename $rpm)"
+		OUTSTR+="\n  rpm -ivh --nodeps --relocate /tmpmod=$MODLOC $RPMDIR/$(basename $rpm)"
 	fi
 	if [[ $rpm == *"package"* ]]; then
-		OUTSTR+="\n  rpm -ivh --nodeps --relocate /tmprpm=/home1/apps $RPMDIR/$(basename $rpm)"
+		OUTSTR+="\n  rpm -ivh --nodeps --relocate /tmprpm=$RPMLOC $RPMDIR/$(basename $rpm)"
 	fi
 done
 
