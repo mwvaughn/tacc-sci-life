@@ -1,0 +1,97 @@
+#!/bin/bash
+
+function askInput {
+	# RPM RPMDIR
+	echo -e "\nMove:\n - ${1}\nto\n - ${2}/?"
+	read -r -p "[Y/n] " response
+	if [[ ! $response =~ ^([Yy]es|[Yy])$ ]]; then
+		exit
+	fi
+}
+
+systemCmds=""
+systemList=(wrangler staff.ls5 staff.stampede2 staff.hikari staff.maverick)
+
+line="####################################"
+
+for spec in $@
+do
+	for system in ${systemList[@]}
+	do
+		echo -e "$line\n    ${system}\n$line"
+		echo -e "Checking to see if ${spec} has been built already..."
+		BUILD=true
+		rpm=$STOCKYARD/rpmbuild/${system##*.}/RPMS/x86_64/tacc-${spec%%.spec}.x86_64.rpm
+		if [[ -e $rpm ]]; then
+			echo -e "   FOUND $rpm\n\nDo you want to rebuild it?"
+			read -r -p "[Y/n] " response
+			if [[ ! $response =~ ^([Yy]es|[Yy])$ ]]; then
+				BUILD=false
+			fi
+		else
+			echo -e "   NOT FOUND"
+			rpm=""
+		fi
+		address=${system}.tacc.utexas.edu
+		if $BUILD; then
+			echo -e "\nCOMPILING $spec for ${system}\n"
+			rpm=`ssh -t ${address} bash -lc "'
+cd $PWD && [ -e ${spec} ] && rpmbuild -bb ${spec}'" | tee /dev/tty | grep "^Wrote:" | cut -f 2 -d " "`
+			rpm=${rpm%}
+			[ -z $rpm ] && exit 1
+		fi
+		rpmName=`basename $rpm`
+		case "$system" in
+			staff.stampede)
+				rpmDir=/admin/build/admin/rpms/stampede/RPMS/x86_64
+				askInput $rpm $rpmDir
+				ssh -t $address bash -c "'
+sudo su - -c \"cp ${rpm} ${rpmDir}/ && echo Done || echo Install failed on $system\"
+'"
+				;;
+			wrangler)
+				rpmDir=/admin/build/rpms/RPMS/x86_64
+				askInput $rpm $rpmDir
+				ssh -t master.${address} bash -c "'
+sudo su - -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
+'"
+				;;
+			staff.maverick)
+				rpmDir=/admin/build/admin/rpms/Maverick/x86_64
+				askInput $rpm $rpmDir
+				ssh -t $address bash -c "'
+sudo su - -c \"cp ${rpm} ${rpmDir}/ && echo Done || echo Install failed on $system\"
+'"
+				;;
+			staff.hikari)
+				rpmDir=/admin/build/rpms/hikari/RPMS/x86_64/08_lsci
+				askInput $rpm $rpmDir
+				ssh -t $address bash -c "'
+cp ${rpm} /tmp/ && sudo su - -c \"cp /tmp/$(basename $rpm) ${rpmDir}/ && echo Done || echo Install failed on $system\"; rm -i /tmp/$(basename $rpm)
+'"
+				;;
+			staff.ls5)
+				rpmDir=/opt/apps/build/blocks/admin/rpms/RPMS/x86_64/08_lsci
+				askInput $rpm $rpmDir
+				ssh -t $address bash -c "'
+sudo su - -c \"cp $rpm ${rpmDir}/ && echo Done || echo Install failed on $system\"
+'"
+				;;
+			staff.stampede2)
+				rpmDir=/admin/build/admin/rpms/stampede/RPMS/x86_64
+				askInput $rpm $rpmDir
+				ssh -t $address bash -c "'
+sudo su - -c \"cp ${rpm} ${rpmDir}/ && echo Done || echo Install failed on $system\"
+'"
+				;;
+			*)
+				echo "No rules for ${system}. Exiting."; exit 1
+				;;
+		esac
+		systemCmds+="${system}: rpm -ivh --nodeps ${rpmDir}/${rpmName}\n"
+	done
+done
+
+echo -e $systemCmds | sort
+
+exit 0

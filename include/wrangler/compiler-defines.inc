@@ -25,3 +25,11 @@
   %{error: You must define which compiler you are using!}
   #exit
 %endif
+
+%if "%{comp_fam}" == "gcc"
+  %define TACC_OPT -march=native
+%endif
+%if "%{comp_fam}" == "intel"
+  %define TACC_OPT -xHOST -ipo
+%endif
+

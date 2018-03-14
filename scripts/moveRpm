@@ -1,0 +1,81 @@
+#!/bin/bash
+
+usage="moveRpm - Copies RPMs to standard admin directories\n\n  Usage: moveRpm RPM [RPM ...]\n"
+
+if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    echo -e $usage
+    exit 0
+fi
+
+if [ $# -lt 2 ]; then
+    echo -e $usage
+    echo "Error: Less than two command line arguments."
+    exit 1
+fi
+
+function askInput {
+	# RPM RPMDIR
+	echo -e "\nMove:\n - ${1}\nto\n - ${2}/?"
+	read -r -p "[Y/n] " response
+	if [[ ! $response =~ ^([Yy]es|[Yy])$ ]]; then
+		return 1
+	fi
+	return 0
+}
+
+MODLOC=/opt/apps
+RPMLOC=/home1/apps
+
+case "$TACC_SYSTEM" in
+	stampede2)
+		RPMDIR=/admin/build/admin/rpms/${TACC_SYSTEM}/RPMS/x86_64
+		address=staff.${TACC_SYSTEM}.tacc.utexas.edu
+		;;
+	stampede)
+		RPMDIR=/admin/build/admin/rpms/${TACC_SYSTEM}/RPMS/x86_64
+		address=staff.${TACC_SYSTEM}.tacc.utexas.edu
+		;;
+	wrangler)
+		RPMDIR=/admin/build/rpms/RPMS/x86_64
+		address=master.wrangler.tacc.utexas.edu
+		;;
+	maverick)
+		RPMDIR=/admin/build/rpms/maverick/RPMS/x86_64
+		address=staff.${TACC_SYSTEM}.tacc.utexas.edu
+		;;
+	hikari)
+		RPMDIR=/admin/build/rpms/hikari/RPMS/x86_64/08_lsci
+		address=staff.${TACC_SYSTEM}.tacc.utexas.edu
+		;;
+	ls5)
+		RPMDIR=/opt/apps/build/blocks/admin/rpms/RPMS/x86_64/08_lsci
+		address=staff.${TACC_SYSTEM}.tacc.utexas.edu
+		RPMLOC=/opt/apps
+		;;
+	*)
+		echo "No rule for ${TACC_SYSTEM}. Exiting"; exit 1
+		;;
+esac
+
+OUTSTR=""
+TOINSTALL=""
+
+for rpm in "$@"; do
+	if askInput $rpm $RPMDIR; then
+		TOINSTALL+=" $PWD/$rpm"
+	fi
+done
+
+TF=/tmp/tmp_$(tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 8)
+ssh -t $address bash -c "'mkdir $TF && cp $TOINSTALL $TF && sudo su - -c \"cp $TF/*rpm $RPMDIR/ && echo Done || echo Move failed; [ -e $TF] && rm -rf $TF\"'"
+
+for rpm in $TOINSTALL; do
+	if [[ $rpm == *"modulefile"* ]]; then
+		OUTSTR+="\n  rpm -ivh --nodeps --relocate /tmpmod=$MODLOC $RPMDIR/$(basename $rpm)"
+	fi
+	if [[ $rpm == *"package"* ]]; then
+		OUTSTR+="\n  rpm -ivh --nodeps --relocate /tmprpm=$RPMLOC $RPMDIR/$(basename $rpm)"
+	fi
+done
+
+echo -e "\nPlease request the following for installation:\n$OUTSTR\n"

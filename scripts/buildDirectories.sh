@@ -65,13 +65,25 @@ if [ ! -d "${baseDir}/rpmbuild" ]; then
 fi
 baseDir=${baseDir}/rpmbuild
 
+# Use a shared source direcotry and
+# link it to each system directory
+[ -d $baseDir/SOURCES ] || mkdir -p $baseDir/SOURCES
+
 echo "Creating rpmbuild heirarchy in the ${baseDir} directory."
-for systemName in hikari ls5 ls4 stampede maverick wrangler; do
+for systemName in hikari ls5 stampede2 stampede maverick wrangler; do
+    # Make system folder
     if [ ! -d $baseDir/$systemName ]; then
         echo "creating $systemName directory"
         mkdir -p $baseDir/$systemName
     fi
-    for subDir in BUILD RPMS SOURCES SRPMS; do
+    # Link SOURCES
+    if [ ! -d $baseDir/$systemName/SOURCES ]
+    then
+        echo "Linking $baseDir/SOURCES to $baseDIR/$systemName"
+        ln -s $baseDir/SOURCES $baseDir/$systemName/SOURCES
+    fi
+    # Create build directories
+    for subDir in BUILD RPMS SRPMS; do
         if [ ! -d $baseDir/$systemName/$subDir ]; then
             echo "creating $systemName/$subDir directory"
             mkdir -p $baseDir/$systemName/$subDir

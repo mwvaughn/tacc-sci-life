@@ -1,13 +1,13 @@
 #!/bin/bash
 
-usage="Usage: myRpmInstall <prefix> <file.rpm>"
+usage="Usage: myRpmInstall <prefix> <module.rpm> <package.rpm>"
 
 if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     echo $usage
     exit 0
 fi
 
-if [ $# -lt 2 ]; then
+if [ $# -lt 3 ]; then
     echo "Error: Less than two command line arguments."
     echo $usage
     exit 1
@@ -24,41 +24,40 @@ if [ ! -d $prefix/db ]; then
     mkdir $prefix/db
 fi
 
-rpmFile=$2
-if [ ! -f $specFile ]; then
-    echo "Error: could not find the RPM file $rpmFile.  If it is in a directory, give a path to the file."
-    echo $usage
+if [[ $2 == *"modulefile"* ]]; then
+	modFile=$2 && rpmFile=$3
+else
+	modFile=$3 && rpmFile=$2
 fi
+
+for file in $modFile $rpmFile; do
+	if [ ! -f $file ]; then
+	    echo "Error: could not find the RPM file $file.  If it is in a directory, give a path to the file."
+	    echo $usage
+	fi
+done
+
+DB=${prefix}/db
+if [ "$TACC_SYSTEM" == "ls5" ]; then
+	DBA="--dbpath $DB"
+else
+	DBA="--dbpath=$DB"
+fi
+
+echo "Installing RPMs"
+RPM_DBPATH=$DB rpm --relocate /tmpmod=$prefix -i --nodeps ${DBA} $modFile && \
+RPM_DBPATH=$DB rpm --relocate /tmprpm=$prefix -i --nodeps ${DBA} $rpmFile && \
+echo "INSTALLED! - ignore the warnings"
 
 #figure out where the modulefile is
 #first grab modulefile
-modulefile=$(rpm -qlp $rpmFile | grep modulefiles | grep 'lua$')
+modulefile=$(rpm -qlp $modFile | grep modulefiles | grep 'lua$')
 #grab path up to the string "modulefiles"
 modfilespath=$(echo $modulefile | sed -e 's@^\(.*\)/modulefiles.*@\1@')
 
 # OK, let's give it a try
-echo "Installing RPM"
-#rpm --dbpath ${prefix}/db --prefix $prefix -ivh --force --nodeps $rpmFile
-rpm --dbpath ${prefix}/db --relocate $modfilespath=$prefix -ivh --force --nodeps $rpmFile
 
-echo "Editing modulefile paths"
-#BWB#figure out where the modulefile is
-#BWB@modulefile=$(rpm -qlp $rpmFile | grep modulefiles | grep lua$)
-#BWB#TODO use the path to figure out the old prefix instead of hardcoding /opt/apps
-#BWB#modulefile=${prefix}${modulefile##/opt/apps} 
-#redefine the modulefile
 modulefile=${prefix}${modulefile##${modfilespath}} 
-
-if [ ! -f $modulefile ]; then
-    echo "The paths in the modulefile for this RPM should be updated."
-    echo "It could not be done automatically."
-    exit 3
-fi
-
-echo "Updating paths in the modulefile $modulefile"
-#now edit it
-escapedPrefix=$(echo $prefix | sed -e 's/\//\\\//g')
-sed -i -e "s/\/opt\/apps/$escapedPrefix/g" $modulefile
 
 echo "Checking the \$MODULEPATH variable."
 if (( $(echo $MODULEPATH | grep -c "${modulefile%/*/*}") )); then

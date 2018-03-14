@@ -1,129 +1,263 @@
-Name:       bwa
-Summary:    Burrows-Wheeler Alignment Tool
-Version:    0.7.12
-Release:    1
-License:    GPLv3
-Group: Applications/Life Sciences
-Source:     http://sourceforge.net/projects/bio-bwa/files/bwa-0.7.12.tar.bz2
-Packager:   TACC - vaughn@tacc.utexas.edu
+#
+# Name
+# 2017-08-01
+#
+# Important Build-Time Environment Variables (see name-defines.inc)
+# NO_PACKAGE=1    -> Do Not Build/Rebuild Package RPM
+# NO_MODULEFILE=1 -> Do Not Build/Rebuild Modulefile RPM
+#
+# Important Install-Time Environment Variables (see post-defines.inc)
+# RPM_DBPATH      -> Path To Non-Standard RPM Database Location
+#
+# Typical Command-Line Example:
+# ./build_rpm.sh Bar.spec
+# cd ../RPMS/x86_64
+# rpm -i --relocate /tmprpm=/opt/apps Bar-package-1.1-1.x86_64.rpm
+# rpm -i --relocate /tmpmod=/opt/apps Bar-modulefile-1.1-1.x86_64.rpm
+# rpm -e Bar-package-1.1-1.x86_64 Bar-modulefile-1.1-1.x86_64
 
-#------------------------------------------------
-# INITIAL DEFINITIONS
-#------------------------------------------------
+%define shortsummary This is a short summary
+Summary: %{shortsummary}
 
-## System Definitions
+# Give the package a base name
+%define pkg_base_name example
+
+# Create some macros (spec file variables)
+%define major_version 1
+%define minor_version 1
+%define patch_version 1
+
+%define pkg_version %{major_version}.%{minor_version}.%{patch_version}
+
+### Toggle On/Off ###
 %include ./include/system-defines.inc
-%include ./include/%{PLATFORM}/rpm-dir.inc
-## Compiler Family Definitions
-# %include ./include/%{PLATFORM}/compiler-defines.inc
-## MPI Family Definitions
-# %include ./include/%{PLATFORM}/mpi-defines.inc
-## Compiler Family Definitions
+%include ./include/%{PLATFORM}/rpm-dir.inc                  
+%include ./include/%{PLATFORM}/compiler-defines.inc
+%include ./include/%{PLATFORM}/mpi-defines.inc
+%include ./include/%{PLATFORM}/name-defines.inc
+########################################
+############ Do Not Remove #############
+########################################
 
-%define INSTALL_DIR %{APPS}/%{name}/%{version}
-%define MODULE_DIR  %{APPS}/%{MODULES}/%{name}
-%define MODULE_VAR  %{MODULE_VAR_PREFIX}BWA
-%define PNAME       bwa
+############ Do Not Change #############
+Name:      %{pkg_name}
+Version:   %{pkg_version}
+########################################
 
-## PACKAGE DESCRIPTION
+Release:   1
+License:   BSD
+Group:     Applications/Life Sciences
+URL:       https://github.com/TACC/lifesci_spec
+Packager:  TACC - email@tacc.utexas.edu
+Source:    %{pkg_base_name}-%{pkg_version}.tar.gz
+
+%package %{PACKAGE}
+Summary: %{shortsummary}
+Group:   Applications/Life Sciences
+%description package
+%{pkg_base_name}: %{shortsummary}
+
+%package %{MODULEFILE}
+Summary: The modulefile RPM
+Group:   Lmod/Modulefiles
+%description modulefile
+Module file for %{pkg_base_name}
+
 %description
-BWA is a software package for mapping low-divergent sequences against a large reference genome, such as the human genome. It consists of three algorithms: BWA-backtrack, BWA-SW and BWA-MEM. The first algorithm is designed for Illumina sequence reads up to 100bp, while the rest two for longer sequences ranged from 70bp to 1Mbp. BWA-MEM and BWA-SW share similar features such as long-read support and split alignment, but BWA-MEM, which is the latest, is generally recommended for high-quality queries as it is faster and more accurate. BWA-MEM also has better performance than BWA-backtrack for 70-100bp Illumina reads.
+%{pkg_base_name}: %{shortsummary}
 
-## PREP
-# Use -n <name> if source file different from <name>-<version>.tar.gz
+#---------------------------------------
 %prep
-rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
+#---------------------------------------
 
-## SETUP
-%setup -n %{PNAME}-%{version}
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
+  # Delete the package installation directory.
+  rm -rf $RPM_BUILD_ROOT/%{INSTALL_DIR}
 
-## BUILD
+# Comment this out if pulling from git
+%setup -n %{pkg_base_name}-%{pkg_version}
+# If using multiple sources. Make sure that the "-n" names match.
+#%setup -T -D -a 1 -n %{pkg_base_name}-%{pkg_version}
+
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+#---------------------------
+  #Delete the module installation directory.
+  rm -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
+
+#---------------------------------------
 %build
+#---------------------------------------
 
-#------------------------------------------------
-# INSTALL
-#------------------------------------------------
+
+#---------------------------------------
 %install
+#---------------------------------------
 
-# Start with a clean environment
+# Setup modules
 %include ./include/%{PLATFORM}/system-load.inc
-mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+##################################
+# If using build_rpm
+##################################
+%include ./include/%{PLATFORM}/compiler-load.inc
+%include ./include/%{PLATFORM}/mpi-load.inc
+%include ./include/%{PLATFORM}/mpi-env-vars.inc
+##################################
+# Manually load modules
+##################################
+# module load
+##################################
 
-#------------------------------------------------
-## Install Steps Start
-module purge
-module load TACC
-module swap $TACC_FAMILY_COMPILER gcc
+echo "Building the package?:    %{BUILD_PACKAGE}"
+echo "Building the modulefile?: %{BUILD_MODULEFILE}"
 
-make
+#------------------------
+%if %{?BUILD_PACKAGE}
+#------------------------
 
-## Install Steps End
-#------------------------------------------------
+  mkdir -p $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  
+  #######################################
+  ##### Create TACC Canary Files ########
+  #######################################
+  touch $RPM_BUILD_ROOT/%{INSTALL_DIR}/.tacc_install_canary
+  #######################################
+  ########### Do Not Remove #############
+  #######################################
 
-cp ./bwa *.pl $RPM_BUILD_ROOT/%{INSTALL_DIR}
+  #========================================
+  # Insert Build/Install Instructions Here
+  #========================================
 
-#------------------------------------------------
-# MODULEFILE CREATION
-#------------------------------------------------
-rm   -rf $RPM_BUILD_ROOT/%{MODULE_DIR}
-mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+# Example configure and make
+./configure --prefix=%{INSTALL_DIR}
+make DESTDIR=$RPM_BUILD_ROOT -j 4
+make DESTDIR=$RPM_BUILD_ROOT -j 4 install
 
-#------------------------------------------------
-## Modulefile Start
-cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua << 'EOF'
-help (
-[[
-Documentation can be found online at http://bio-bwa.sourceforge.net/bwa.shtml
-The bwa executable can be found in %{MODULE_VAR}_DIR
+#-----------------------  
+%endif # BUILD_PACKAGE |
+#-----------------------
+
+
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+#---------------------------
+
+  mkdir -p $RPM_BUILD_ROOT/%{MODULE_DIR}
+  
+  #######################################
+  ##### Create TACC Canary Files ########
+  #######################################
+  touch $RPM_BUILD_ROOT/%{MODULE_DIR}/.tacc_module_canary
+  #######################################
+  ########### Do Not Remove #############
+  #######################################
+  
+# Write out the modulefile associated with the application
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME} << 'EOF'
+local help_message = [[
+The %{pkg_base_name} module file defines the following environment variables:
+
+ - %{MODULE_VAR}_DIR
+ - %{MODULE_VAR}_BIN
+ - %{MODULE_VAR}_LIB
+ - %{MODULE_VAR}_INC
+
+for the location of the %{pkg_base_name} distribution.
+
+Documentation: %{url}
 
 Version %{version}
-]])
+]]
 
-whatis("Name: bwa")
+help(help_message,"\n")
+
+whatis("Name: %{pkg_base_name}")
 whatis("Version: %{version}")
 whatis("Category: computational biology, genomics")
-whatis("Keywords:  Biology, Genomics, Alignment, Sequencing")
-whatis("Description: Burrows-Wheeler Alignment Tool")
-whatis("URL: http://bio-bwa.sourceforge.net/")
+whatis("Keywords: Biology, Genomics")
+whatis("Description: %{shortsummary}")
+whatis("URL: %{url}")
 
-setenv("%{MODULE_VAR}_DIR","%{INSTALL_DIR}")
-prepend_path("PATH"       ,"%{INSTALL_DIR}")
+prepend_path("PATH",		"%{INSTALL_DIR}/bin")
+prepend_path("LD_LIBRARY_PATH",	"%{INSTALL_DIR}/lib")
+prepend_path("MANPATH",		"%{INSTALL_DIR}/share/man")
 
+setenv("%{MODULE_VAR}_DIR",     "%{INSTALL_DIR}")
+setenv("%{MODULE_VAR}_BIN",	"%{INSTALL_DIR}/bin")
+setenv("%{MODULE_VAR}_LIB",	"%{INSTALL_DIR}/lib")
+setenv("%{MODULE_VAR}_INC",	"%{INSTALL_DIR}/include")
 EOF
-## Modulefile End
-#------------------------------------------------
-
-## Lua syntax check
-if [ -f $SPEC_DIR/checkModuleSyntax ]; then
-    $SPEC_DIR/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{version}.lua
-fi
-
-## VERSION FILE
-cat > $RPM_BUILD_ROOT%{MODULE_DIR}/.version.%{version} << 'EOF'
+  
+cat > $RPM_BUILD_ROOT/%{MODULE_DIR}/.version.%{version} << 'EOF'
 #%Module3.1.1#################################################
 ##
-## version file for %{PNAME}-%{version}
+## version file for %{BASENAME}%{version}
 ##
 
 set     ModulesVersion      "%{version}"
 EOF
+  
+  # Check the syntax of the generated lua modulefile
+  %{SPEC_DIR}/scripts/checkModuleSyntax $RPM_BUILD_ROOT/%{MODULE_DIR}/%{MODULE_FILENAME}
 
-#------------------------------------------------
-# FILES SECTION
-#------------------------------------------------
-#%files -n %{name}-%{comp_fam_ver}
-%files
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
 
-# Define files permisions, user and group
-%defattr(755,root,root,-)
-%{INSTALL_DIR}
-%{MODULE_DIR}
 
-## CLEAN UP
-%post
+#------------------------
+%if %{?BUILD_PACKAGE}
+%files package
+#------------------------
+
+  %defattr(-,root,install,)
+  # RPM package contains files within these directories
+  %{INSTALL_DIR}
+
+#-----------------------
+%endif # BUILD_PACKAGE |
+#-----------------------
+#---------------------------
+%if %{?BUILD_MODULEFILE}
+%files modulefile 
+#---------------------------
+
+  %defattr(-,root,install,)
+  # RPM modulefile contains files within these directories
+  %{MODULE_DIR}
+
+#--------------------------
+%endif # BUILD_MODULEFILE |
+#--------------------------
+
+
+########################################
+## Fix Modulefile During Post Install ##
+########################################
+%post %{PACKAGE}
+export PACKAGE_POST=1
+%include ./include/%{PLATFORM}/post-defines.inc
+%post %{MODULEFILE}
+export MODULEFILE_POST=1
+%include ./include/%{PLATFORM}/post-defines.inc
+%preun %{PACKAGE}
+export PACKAGE_PREUN=1
+%include ./include/%{PLATFORM}/post-defines.inc
+########################################
+############ Do Not Remove #############
+########################################
+
+#---------------------------------------
 %clean
-# Make sure we are not within one of the directories we try to delete
-cd /tmp
-
-# Remove the installation files now that the RPM has been generated
+#---------------------------------------
 rm -rf $RPM_BUILD_ROOT
